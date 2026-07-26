@@ -197,7 +197,7 @@ function Hero() {
 
   const headlineLine2 = useMemo(() => {
     if (phase >= 5) return "Already Recovered.";
-    if (phase >= 3) return "We Detected the Problem.";
+    if (phase >= 3) return "Disruption Ahead.";
     return "Interruptions.";
   }, [phase]);
 
