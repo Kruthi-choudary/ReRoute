@@ -138,7 +138,7 @@ function Hero() {
   });
   const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.5 });
 
-  const planeX = useMotionValue(-120);
+  const planeX = useMotionValue(380);
   const planeY = useMotionValue(640);
   const planeRot = useMotionValue(0);
   const planeShake = useMotionValue(0);
