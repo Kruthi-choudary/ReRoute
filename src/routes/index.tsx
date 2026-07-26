@@ -1092,29 +1092,85 @@ function FAQ() {
 
 /* ------------------------- FINAL CTA ------------------------- */
 function CTA() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const planeScale = useTransform(scrollYProgress, [0.2, 0.7], [0.6, 2.6]);
+  const planeY = useTransform(scrollYProgress, [0.2, 0.7], [80, -120]);
+  const planeOpacity = useTransform(scrollYProgress, [0.2, 0.55, 0.75], [0, 1, 0]);
+  const trailDraw = useTransform(scrollYProgress, [0.2, 0.65], [0, 1]);
+  const logoOpacity = useTransform(scrollYProgress, [0.62, 0.78], [0, 1]);
+
   return (
-    <section id="cta" className="relative overflow-hidden py-32">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/8 via-background to-accent/10" />
-      <div className="absolute inset-0 -z-10 opacity-40" style={{
-        backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(37,99,235,0.15), transparent 50%), radial-gradient(ellipse at 80% 60%, rgba(20,184,166,0.12), transparent 50%)"
+    <section id="cta" ref={ref} className="relative overflow-hidden py-40">
+      <div className="absolute inset-0 -z-20 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
+      <div className="absolute inset-0 -z-20 opacity-50" style={{
+        backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(37,99,235,0.18), transparent 50%), radial-gradient(ellipse at 80% 60%, rgba(20,184,166,0.14), transparent 55%)"
       }} />
-      <div className="mx-auto max-w-3xl px-6 text-center">
+
+      {/* Contrail that morphs into wordmark */}
+      <svg viewBox="0 0 1200 400" className="absolute inset-x-0 top-1/2 -z-10 h-[400px] w-full -translate-y-1/2" aria-hidden>
+        <defs>
+          <linearGradient id="cta-trail" x1="0" x2="1">
+            <stop offset="0%" stopColor="#2563EB" stopOpacity="0" />
+            <stop offset="60%" stopColor="#2563EB" stopOpacity="1" />
+            <stop offset="100%" stopColor="#14B8A6" stopOpacity="1" />
+          </linearGradient>
+        </defs>
+        <motion.path
+          d="M 60 320 C 260 300, 460 220, 620 200 S 980 160, 1140 90"
+          fill="none"
+          stroke="url(#cta-trail)"
+          strokeWidth={4}
+          strokeLinecap="round"
+          pathLength={1}
+          style={{ pathLength: trailDraw }}
+        />
+      </svg>
+
+      {/* Plane flies toward viewer */}
+      <motion.div
+        style={{ scale: planeScale, y: planeY, opacity: planeOpacity }}
+        className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2"
+      >
+        <img
+          src={planeImg}
+          alt=""
+          className="w-[26vw] max-w-[420px] min-w-[220px] select-none drop-shadow-[0_40px_60px_rgba(15,23,42,0.25)]"
+          draggable={false}
+        />
+      </motion.div>
+
+      {/* Logo reveal — contrail resolves into wordmark */}
+      <motion.div
+        style={{ opacity: logoOpacity }}
+        className="pointer-events-none absolute inset-x-0 top-[38%] z-10 text-center"
+      >
+        <div className="inline-flex items-center gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-[var(--shadow-lift)]">
+            <Plane className="h-5 w-5 -rotate-45" />
+          </span>
+          <span className="text-3xl font-semibold tracking-tight md:text-4xl">
+            ReRoute<span className="text-primary">.ai</span>
+          </span>
+        </div>
+      </motion.div>
+
+      <div className="relative z-20 mx-auto max-w-3xl px-6 pt-56 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-[clamp(2rem,5vw,3.75rem)] font-semibold leading-[1.05] tracking-[-0.03em]"
+          transition={{ duration: 0.7 }}
+          className="text-[clamp(2.4rem,6vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.035em]"
         >
-          Let AI handle travel disruptions <br className="hidden md:block" />
-          before they become your problem.
+          Travel should <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">never stop.</span>
         </motion.h2>
-        <p className="mx-auto mt-5 max-w-xl text-secondary">
+        <p className="mx-auto mt-6 max-w-xl text-secondary">
           Start free, or talk to us about enterprise deployments across your entire mobility programme.
         </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <a href="#" className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5">
-            Start Free <ArrowRight className="h-4 w-4" />
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <a href="#" className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5">
+            Start Your Journey <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </a>
           <a href="#" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-7 py-4 text-sm font-semibold text-foreground transition hover:bg-background">
             Book Demo
@@ -1125,6 +1181,7 @@ function CTA() {
     </section>
   );
 }
+
 
 /* ------------------------- FOOTER ------------------------- */
 function Footer() {
