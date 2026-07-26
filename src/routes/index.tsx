@@ -77,364 +77,432 @@ function Nav() {
 
 /* ------------------------- HERO ANIMATION ------------------------- */
 /** Airplane travels a flight path. Route reroutes mid-flight. Loops every ~15s. */
-function FlightPath() {
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
-  // phase 0: initial, 1: original route drawn, 2: disruption detected, 3: rerouted
-  useEffect(() => {
-    let mounted = true;
-    const run = () => {
-      const seq: Array<[0 | 1 | 2 | 3, number]> = [
-        [0, 300], [1, 3200], [2, 1600], [3, 6000],
-      ];
-      let acc = 0;
-      seq.forEach(([p, dur]) => {
-        acc += dur;
-        setTimeout(() => mounted && setPhase(p), acc - dur);
-      });
-      setTimeout(() => mounted && run(), 15000);
-    };
-    run();
-    return () => { mounted = false; };
-  }, []);
+/* ============================== HERO ============================== */
 
-  // path coords in viewBox 800 x 500
-  const originalPath = "M -40 380 C 160 320, 340 300, 520 240 S 780 120, 860 80";
-  const reroutePath  = "M -40 380 C 160 320, 300 340, 420 300 S 620 140, 860 40";
+/**
+ * Scroll-driven hero. The section is 500vh tall; a sticky inner viewport
+ * pins to the screen while an SVG path animates a plane image along a
+ * flight route that reroutes mid-journey.
+ */
 
+// Path space uses viewBox 1000 x 700, aligned to full-viewport SVG.
+const ORIGINAL_PATH =
+  "M -40 640 C 160 600, 300 560, 460 500 S 760 380, 1040 320";
+const REROUTE_PATH =
+  "M -40 640 C 160 600, 300 560, 460 500 C 560 460, 640 380, 640 300 " +
+  "C 640 220, 800 160, 1040 60";
+
+const CITIES: { name: string; code: string; x: number; y: number }[] = [
+  { name: "Hyderabad", code: "HYD", x: 40,  y: 640 },
+  { name: "Dubai",     code: "DXB", x: 330, y: 560 },
+  { name: "London",    code: "LHR", x: 570, y: 445 },
+  { name: "New York",  code: "JFK", x: 1000, y: 60  },
+];
+
+const RECOVERY_ITEMS = [
+  { icon: Plane,  label: "New Flight Booked" },
+  { icon: Hotel,  label: "Hotel Updated" },
+  { icon: Car,    label: "Airport Transfer Confirmed" },
+  { icon: Ticket, label: "Boarding Pass Ready" },
+];
+
+const CHECKLIST = [
+  "24/7 Flight Monitoring",
+  "Automatic Rebooking",
+  "Hotel Recovery",
+  "Real-time Notifications",
+];
+
+function Cloud({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <div className="pointer-events-none absolute inset-0">
-      <svg viewBox="0 0 800 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="routeBlue" x1="0" x2="1">
-            <stop offset="0%" stopColor="#2563EB" stopOpacity="0" />
-            <stop offset="50%" stopColor="#2563EB" stopOpacity="1" />
-            <stop offset="100%" stopColor="#14B8A6" stopOpacity="1" />
-          </linearGradient>
-          <linearGradient id="routeRed" x1="0" x2="1">
-            <stop offset="0%" stopColor="#DC2626" stopOpacity="0" />
-            <stop offset="100%" stopColor="#DC2626" stopOpacity="1" />
-          </linearGradient>
-        </defs>
-
-        {/* Original white trail */}
-        <motion.path
-          d={originalPath}
-          fill="none"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="2.5"
-          strokeDasharray="6 8"
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{
-            pathLength: phase >= 1 ? 1 : 0,
-            opacity: phase >= 3 ? 0 : phase >= 1 ? 0.9 : 0,
-          }}
-          transition={{ duration: 2.2, ease: "easeInOut" }}
-        />
-
-        {/* Danger flash */}
-        <motion.path
-          d={originalPath}
-          fill="none"
-          stroke="url(#routeRed)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: phase === 2 ? 1 : 0 }}
-          transition={{ duration: 0.4 }}
-        />
-
-        {/* New blue reroute */}
-        <motion.path
-          d={reroutePath}
-          fill="none"
-          stroke="url(#routeBlue)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: phase >= 3 ? 1 : 0 }}
-          transition={{ duration: 2.4, ease: "easeInOut" }}
-        />
-
-        {/* Origin marker */}
-        <circle cx="-10" cy="380" r="4" fill="#fff" />
-        {/* Old destination */}
-        <motion.g animate={{ opacity: phase >= 3 ? 0.3 : 1 }} transition={{ duration: 0.8 }}>
-          <circle cx="820" cy="80" r="5" fill="#fff" />
-          <circle cx="820" cy="80" r="10" fill="none" stroke="#fff" strokeOpacity="0.4" />
-        </motion.g>
-        {/* New destination */}
-        <motion.g
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: phase >= 3 ? 1 : 0, scale: phase >= 3 ? 1 : 0 }}
-          transition={{ duration: 0.6, type: "spring" }}
-          style={{ transformOrigin: "820px 40px" }}
-        >
-          <circle cx="820" cy="40" r="6" fill="#14B8A6" />
-          <circle cx="820" cy="40" r="12" fill="none" stroke="#14B8A6" strokeOpacity="0.5" />
-        </motion.g>
-      </svg>
-
-      {/* Disruption toast */}
-      <AnimatePresence>
-        {phase === 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-danger/95 px-4 py-2 text-xs font-medium text-white shadow-[var(--shadow-float)] backdrop-blur"
-          >
-            <span className="inline-flex items-center gap-2">
-              <CloudLightning className="h-3.5 w-3.5" />
-              Flight Disruption Detected — Weather
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <svg viewBox="0 0 200 80" className={className} style={style} aria-hidden>
+      <path
+        d="M20 60 C 10 60, 4 44, 22 40 C 22 24, 48 20, 56 34 C 66 22, 96 24, 100 42 C 118 34, 142 42, 142 56 C 166 52, 180 68, 168 76 L 24 76 C 12 76, 10 66, 20 60 Z"
+        fill="white"
+        opacity="0.85"
+      />
+    </svg>
   );
 }
 
-/* --------------------- LIVE RECOVERY CARD --------------------- */
-const RECOVERY_STEPS = [
-  { icon: Radar,      label: "Monitoring Flight AI248",    tone: "muted" as const },
-  { icon: CloudLightning, label: "Delay Detected",          tone: "danger" as const },
-  { icon: Sparkles,   label: "Searching Alternatives",     tone: "warning" as const },
-  { icon: Plane,      label: "New Flight Found",           tone: "success" as const },
-  { icon: Hotel,      label: "Hotel Updated",              tone: "success" as const },
-  { icon: Car,        label: "Taxi Rescheduled",           tone: "success" as const },
-  { icon: Ticket,     label: "Boarding Pass Generated",    tone: "success" as const },
-];
+function Hero() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const origRef = useRef<SVGPathElement>(null);
+  const rerRef = useRef<SVGPathElement>(null);
 
-function RecoveryCard() {
-  const [active, setActive] = useState(1);
-  useEffect(() => {
-    const id = setInterval(() => setActive((a) => (a >= RECOVERY_STEPS.length ? 1 : a + 1)), 1400);
-    return () => clearInterval(id);
-  }, []);
+  const { scrollYProgress } = useScroll({
+    target: wrapperRef,
+    offset: ["start start", "end end"],
+  });
+  const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.5 });
+
+  const planeX = useMotionValue(-120);
+  const planeY = useMotionValue(640);
+  const planeRot = useMotionValue(0);
+  const planeShake = useMotionValue(0);
+  const [phase, setPhase] = useState(0);
+  // phase 0 idle, 1 flying, 2 pins, 3 disruption, 4 rerouted, 5 destination
+
+  useMotionValueEvent(p, "change", (v) => {
+    const orig = origRef.current;
+    const rer = rerRef.current;
+    if (!orig || !rer) return;
+
+    // Choose active path. Before 0.55 follow original; after 0.55 follow reroute.
+    let path: SVGPathElement;
+    let t: number;
+    if (v < 0.55) {
+      path = orig;
+      // idle for 0..0.05, then move 0.05..0.55 -> t 0..0.55
+      t = Math.max(0, (v - 0.05) / 1); // stays under 0.55
+    } else {
+      path = rer;
+      // continue smoothly: at v=0.55 start at 0.55, at v=1 reach 1
+      t = 0.55 + (v - 0.55) * (1 / 0.45);
+    }
+    t = Math.min(0.99, Math.max(0.001, t));
+
+    const total = path.getTotalLength();
+    const pt = path.getPointAtLength(total * t);
+    const ahead = path.getPointAtLength(Math.min(total, total * t + 1.5));
+    const angle = (Math.atan2(ahead.y - pt.y, ahead.x - pt.x) * 180) / Math.PI;
+
+    planeX.set(pt.x);
+    planeY.set(pt.y);
+    // slight bank/tilt following tangent (image faces forward already)
+    planeRot.set(angle * 0.35);
+
+    // shake in disruption band
+    if (v > 0.42 && v < 0.55) {
+      planeShake.set(Math.sin(v * 240) * 4);
+    } else {
+      planeShake.set(0);
+    }
+
+    let ph = 0;
+    if (v > 0.02) ph = 1;
+    if (v > 0.22) ph = 2;
+    if (v > 0.42) ph = 3;
+    if (v > 0.58) ph = 4;
+    if (v > 0.85) ph = 5;
+    setPhase(ph);
+  });
+
+  // Contrail progress: dash offset for two paths
+  const origDraw = useTransform(p, [0.05, 0.55], [0, 1]);
+  const rerDraw = useTransform(p, [0.55, 0.9], [0, 1]);
+  const origFade = useTransform(p, [0.42, 0.6], [1, 0.15]);
+
+  const headlineLine2 = useMemo(() => {
+    if (phase >= 5) return "Already Recovered.";
+    if (phase >= 3) return "We Detected the Problem.";
+    return "Interruptions.";
+  }, [phase]);
+
+  const cloudsY = useTransform(p, [0, 1], ["0%", "-30%"]);
+  const cloudsY2 = useTransform(p, [0, 1], ["0%", "-60%"]);
+
+  return (
+    <section ref={wrapperRef} className="relative w-full" style={{ height: "500vh" }}>
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        {/* Sky gradient backdrop */}
+        <div
+          className="absolute inset-0 -z-20"
+          style={{
+            background:
+              "linear-gradient(180deg, #FFF6EA 0%, #FFEFD8 18%, #F5F0FF 55%, #F8FAFC 100%)",
+          }}
+        />
+        {/* Warm sun glow */}
+        <div
+          className="absolute -z-10"
+          style={{
+            top: "-10%", right: "-10%", width: "60vw", height: "60vw",
+            background:
+              "radial-gradient(closest-side, rgba(255,190,120,0.55), rgba(255,190,120,0) 70%)",
+            filter: "blur(4px)",
+          }}
+        />
+
+        {/* Parallax clouds */}
+        <motion.div style={{ y: cloudsY }} className="absolute inset-0 -z-10">
+          <Cloud className="absolute w-[26vw] drift-slower" style={{ top: "18%", left: "-4%" }} />
+          <Cloud className="absolute w-[18vw] drift-slow" style={{ top: "62%", left: "22%", opacity: 0.7 }} />
+          <Cloud className="absolute w-[22vw] drift-slower" style={{ top: "38%", right: "6%", opacity: 0.9 }} />
+        </motion.div>
+        <motion.div style={{ y: cloudsY2 }} className="absolute inset-0 -z-10">
+          <Cloud className="absolute w-[14vw] drift-slow" style={{ top: "78%", left: "58%", opacity: 0.6 }} />
+          <Cloud className="absolute w-[16vw] drift-slower" style={{ top: "8%", left: "48%", opacity: 0.5 }} />
+        </motion.div>
+
+        {/* Flight canvas SVG (full-hero) */}
+        <svg
+          viewBox="0 0 1000 700"
+          preserveAspectRatio="xMidYMid slice"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="trail" x1="0" x2="1">
+              <stop offset="0%" stopColor="#2563EB" stopOpacity="0" />
+              <stop offset="60%" stopColor="#2563EB" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#14B8A6" stopOpacity="1" />
+            </linearGradient>
+            <linearGradient id="trailRed" x1="0" x2="1">
+              <stop offset="0%" stopColor="#DC2626" stopOpacity="0" />
+              <stop offset="100%" stopColor="#DC2626" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+
+          {/* Original contrail — turns red on disruption, fades on reroute */}
+          <motion.path
+            ref={origRef}
+            d={ORIGINAL_PATH}
+            fill="none"
+            stroke={phase >= 3 && phase < 5 ? "url(#trailRed)" : "url(#trail)"}
+            strokeWidth={3}
+            strokeLinecap="round"
+            pathLength={1}
+            style={{
+              pathLength: origDraw,
+              opacity: origFade,
+            }}
+          />
+          {/* Reroute path */}
+          <motion.path
+            ref={rerRef}
+            d={REROUTE_PATH}
+            fill="none"
+            stroke="url(#trail)"
+            strokeWidth={3.2}
+            strokeLinecap="round"
+            pathLength={1}
+            style={{ pathLength: rerDraw }}
+          />
+
+          {/* City pins */}
+          {CITIES.map((c, i) => (
+            <motion.g
+              key={c.code}
+              initial={false}
+              animate={{
+                opacity: phase >= 2 ? 1 : 0,
+                scale: phase >= 2 ? 1 : 0.6,
+              }}
+              transition={{ delay: 0.08 * i, duration: 0.5 }}
+              style={{ transformOrigin: `${c.x}px ${c.y}px` }}
+            >
+              <circle cx={c.x} cy={c.y} r={14} fill="white" fillOpacity="0.6" />
+              <circle cx={c.x} cy={c.y} r={5} fill="#2563EB" />
+              <text
+                x={c.x + 12}
+                y={c.y - 10}
+                fontSize="11"
+                fontWeight="600"
+                fill="#0F172A"
+                fontFamily="Inter, sans-serif"
+              >
+                {c.code}
+              </text>
+            </motion.g>
+          ))}
+
+          {/* Destination glow at NY */}
+          <motion.g
+            animate={{ opacity: phase >= 5 ? 1 : 0, scale: phase >= 5 ? 1 : 0.4 }}
+            style={{ transformOrigin: "1000px 60px" }}
+            transition={{ duration: 0.6, type: "spring" }}
+          >
+            <circle cx={1000} cy={60} r={22} fill="#14B8A6" fillOpacity="0.18" />
+            <circle cx={1000} cy={60} r={9} fill="#14B8A6" />
+          </motion.g>
+        </svg>
+
+        {/* Plane image — positioned by JS-driven motion values in SVG coords.
+            We compute % of container from 1000x700 viewBox by using CSS calc
+            through motion transforms. Simpler: place inside a full-bleed
+            container that also uses viewBox math via percentage. */}
+        <PlaneOnPath x={planeX} y={planeY} rot={planeRot} shake={planeShake} />
+
+        {/* Left column: text */}
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-6 pt-16">
+          <div className="max-w-xl">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/70 px-3 py-1.5 text-[11px] font-medium text-secondary backdrop-blur"
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent soft-pulse" />
+              Autonomous Travel Concierge · Live
+            </motion.div>
+
+            <h1 className="mt-6 text-[clamp(2.4rem,5.5vw,4.5rem)] font-semibold leading-[1.02] tracking-[-0.03em]">
+              <span className="block">Travel Without</span>
+              <span className="relative block h-[1.05em] overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={headlineLine2}
+                    initial={{ y: "100%", opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: "-100%", opacity: 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    className="inline-block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
+                  >
+                    {headlineLine2}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </h1>
+
+            <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-secondary">
+              Our autonomous AI continuously monitors your flights, predicts disruptions,
+              automatically reroutes flights, updates hotels and reschedules airport
+              transfers — keeping your journey moving without any manual action.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a
+                href="#cta"
+                className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5"
+              >
+                Start Your Journey
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </a>
+              <a
+                href="#how"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-white hover:-translate-y-0.5"
+              >
+                <Play className="h-3.5 w-3.5" /> Watch Live Demo
+              </a>
+            </div>
+
+            <ul className="mt-8 grid grid-cols-2 gap-x-6 gap-y-2 text-[13px] text-secondary">
+              {CHECKLIST.map((c) => (
+                <li key={c} className="inline-flex items-center gap-2">
+                  <span className="grid h-4 w-4 place-items-center rounded-full bg-success/15 text-success">
+                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                  </span>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Disruption toast */}
+        <AnimatePresence>
+          {phase === 3 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              className="absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-full bg-danger/95 px-4 py-2 text-xs font-medium text-white shadow-[var(--shadow-float)] backdrop-blur"
+            >
+              <span className="inline-flex items-center gap-2">
+                <CloudLightning className="h-3.5 w-3.5" />
+                Flight Disruption Detected — Storm over LHR
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Recovery cards — right side, appear after reroute */}
+        <div className="pointer-events-none absolute inset-y-0 right-4 z-10 hidden w-[320px] items-center md:flex">
+          <div className="w-full space-y-2.5">
+            {RECOVERY_ITEMS.map((it, i) => {
+              const Icon = it.icon;
+              const visible = phase >= 4;
+              return (
+                <motion.div
+                  key={it.label}
+                  initial={false}
+                  animate={{
+                    opacity: visible ? 1 : 0,
+                    y: visible ? 0 : 20,
+                  }}
+                  transition={{ delay: visible ? 0.12 * i : 0, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-[var(--shadow-float)] backdrop-blur-xl"
+                >
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-success/10 text-success">
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                  </span>
+                  <div>
+                    <div className="text-[13px] font-semibold">{it.label}</div>
+                    <div className="flex items-center gap-1 text-[11px] text-secondary">
+                      <Icon className="h-3 w-3" /> Auto-recovered · No action
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Scroll hint */}
+        <motion.div
+          animate={{ y: [0, 6, 0], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 text-secondary"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em]">Scroll</span>
+            <ChevronDown className="h-4 w-4" />
+          </div>
+        </motion.div>
+
+        {/* Progress rail */}
+        <div className="absolute right-6 top-1/2 z-20 hidden h-40 w-[2px] -translate-y-1/2 rounded-full bg-border/70 lg:block">
+          <motion.div
+            className="w-full origin-top rounded-full bg-primary"
+            style={{ scaleY: p, height: "100%" }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Renders the plane image at the given SVG viewBox coordinates by placing it
+ * inside a matching 1000x700 stage that scales to the viewport.
+ */
+function PlaneOnPath({
+  x, y, rot, shake,
+}: {
+  x: ReturnType<typeof useMotionValue<number>>;
+  y: ReturnType<typeof useMotionValue<number>>;
+  rot: ReturnType<typeof useMotionValue<number>>;
+  shake: ReturnType<typeof useMotionValue<number>>;
+}) {
+  // Convert SVG (0..1000, 0..700) coords to CSS % of container.
+  // SVG uses xMidYMid slice, matching how we draw the paths; using percentages
+  // approximates well for wide viewports.
+  const left = useTransform(x, (v) => `${(v / 1000) * 100}%`);
+  const top = useTransform(y, (v) => `${(v / 700) * 100}%`);
+  const rotate = useTransform([rot, shake] as const, ([r, s]: number[]) => r + s * 0.4);
+  const xShake = useTransform(shake, (s) => s);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.8 }}
-      className="relative w-full max-w-sm rounded-[22px] border border-white/60 bg-white/85 p-5 shadow-[var(--shadow-float)] backdrop-blur-xl bob"
+      className="pointer-events-none absolute z-[5]"
+      style={{ left, top, x: "-50%", y: "-58%" }}
     >
-      <div className="flex items-center justify-between border-b border-border/70 pb-4">
-        <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-secondary">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-success soft-pulse" />
-            Live Recovery
-          </div>
-          <div className="mt-1 text-[15px] font-semibold">HYD → JFK</div>
-        </div>
-        <div className="rounded-full bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger">
-          Cancelled
-        </div>
-      </div>
-
-      <ul className="mt-4 space-y-2.5">
-        {RECOVERY_STEPS.map((s, i) => {
-          const done = i < active;
-          const current = i === active - 1;
-          const Icon = s.icon;
-          return (
-            <li
-              key={s.label}
-              className={`flex items-center gap-3 rounded-xl px-2.5 py-2 transition-all ${
-                current ? "bg-primary/[0.06]" : ""
-              }`}
-              style={{ opacity: i < active ? 1 : 0.35 }}
-            >
-              <span
-                className={`grid h-7 w-7 place-items-center rounded-lg ${
-                  done && !current
-                    ? "bg-success/10 text-success"
-                    : current
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-secondary"
-                }`}
-              >
-                {done && !current ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
-              </span>
-              <span className={`text-[13px] ${current ? "font-medium text-foreground" : "text-secondary"}`}>
-                {s.label}
-              </span>
-              {current && (
-                <motion.span
-                  className="ml-auto h-1 w-1 rounded-full bg-primary"
-                  animate={{ opacity: [1, 0.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-3 text-[11px] text-secondary">
-        <span>Autonomous · No action needed</span>
-        <span className="font-mono">ETA 09:42</span>
-      </div>
+      <motion.div style={{ rotate, x: xShake }} className="will-change-transform bob">
+        <img
+          src={planeImg}
+          alt=""
+          width={1600}
+          height={1200}
+          className="w-[38vw] max-w-[560px] min-w-[280px] select-none drop-shadow-[0_30px_40px_rgba(15,23,42,0.25)]"
+          draggable={false}
+        />
+      </motion.div>
     </motion.div>
   );
 }
 
-/* ------------------------- HERO SECTION ------------------------- */
-function Hero() {
-  const [headlineIdx, setHeadlineIdx] = useState(0);
-  const headlines = ["Your Journey Never Stops.", "Our AI Already Recovered It."];
-  useEffect(() => {
-    const id = setInterval(() => setHeadlineIdx((i) => (i + 1) % headlines.length), 4500);
-    return () => clearInterval(id);
-  }, []);
 
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const planeY = useTransform(scrollYProgress, [0, 1], [0, -180]);
-  const cloudY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-
-  return (
-    <section ref={ref} className="relative min-h-screen w-full overflow-hidden pt-16">
-      {/* Backdrop */}
-      <motion.div style={{ y: cloudY }} className="absolute inset-0 -z-10">
-        <img
-          src={heroPlane}
-          alt="Aircraft above clouds at sunrise"
-          width={1920}
-          height={1280}
-          className="h-full w-full object-cover"
-          style={{ objectPosition: "center 40%" }}
-        />
-        {/* Warm wash to light theme */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-      </motion.div>
-
-      {/* Flight path overlay */}
-      <motion.div style={{ y: planeY }} className="absolute inset-0 z-0">
-        <FlightPath />
-      </motion.div>
-
-      {/* Content */}
-      <motion.div style={{ y: contentY }} className="relative z-10 mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-[1.1fr_1fr]">
-        {/* Left */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-white/70 px-3 py-1.5 text-[11px] font-medium text-secondary backdrop-blur"
-          >
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent soft-pulse" />
-            Autonomous Travel Concierge · v3
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.7 }}
-            className="mt-6 text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.03em]"
-          >
-            Travel Without <br className="hidden sm:block" />
-            <span className="relative">
-              Interruptions.
-              <svg className="absolute -bottom-2 left-0 w-full" height="12" viewBox="0 0 300 12" preserveAspectRatio="none">
-                <motion.path
-                  d="M2 8 C 80 2, 200 2, 298 6"
-                  fill="none"
-                  stroke="#2563EB"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.9, duration: 1.2 }}
-                />
-              </svg>
-            </span>
-          </motion.h1>
-
-          <div className="mt-6 h-6 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={headlineIdx}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4 }}
-                className="inline-block"
-              >
-                {headlines[headlineIdx]}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="mt-4 max-w-xl text-[17px] leading-relaxed text-secondary"
-          >
-            Our AI continuously monitors flights worldwide and automatically reroutes your entire
-            journey — flights, hotels, transfers — when disruptions occur.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-            className="mt-8 flex flex-wrap items-center gap-3"
-          >
-            <a
-              href="#cta"
-              className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5 hover:shadow-[0_40px_100px_-30px_rgba(37,99,235,0.55)]"
-            >
-              Start Your Journey
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </a>
-            <a
-              href="#how"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-white"
-            >
-              <Play className="h-3.5 w-3.5" /> Watch Live Recovery
-            </a>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-secondary"
-          >
-            {[
-              { i: ShieldCheck, t: "Trusted by 40k+ travelers" },
-              { i: Radar,       t: "24/7 Monitoring" },
-              { i: Zap,         t: "Automatic Rebooking" },
-            ].map(({ i: Icon, t }) => (
-              <span key={t} className="inline-flex items-center gap-2">
-                <Icon className="h-3.5 w-3.5 text-primary" /> {t}
-              </span>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Right */}
-        <div className="flex justify-center lg:justify-end">
-          <RecoveryCard />
-        </div>
-      </motion.div>
-
-      {/* Scroll hint */}
-      <motion.div
-        animate={{ y: [0, 6, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 text-secondary"
-      >
-        <ChevronDown className="h-5 w-5" />
-      </motion.div>
-    </section>
-  );
-}
 
 /* ------------------------- HOW IT WORKS ------------------------- */
 function How() {
