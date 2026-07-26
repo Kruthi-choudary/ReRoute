@@ -127,6 +127,7 @@ export function WorldMap({
                 fill="none"
                 stroke="var(--warning)"
                 strokeWidth="0.12"
+                initial={{ r: 0.7, opacity: 0.6 }}
                 animate={{ r: [0.7, 1.8], opacity: [0.6, 0] }}
                 transition={{ duration: 2.6, repeat: Infinity }}
               />
