@@ -66,6 +66,7 @@
 }
 
 @layer base {
+  html, body { overflow-x: clip; }
   * { border-color: var(--color-border); }
   html { scroll-behavior: smooth; }
   body {
