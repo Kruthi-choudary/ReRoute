@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ShellTripsRouteImport } from './routes/_shell.trips'
 import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellRecoveryRouteImport } from './routes/_shell.recovery'
 import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
@@ -21,6 +20,7 @@ import { Route as ShellHistoryRouteImport } from './routes/_shell.history'
 import { Route as ShellDashboardRouteImport } from './routes/_shell.dashboard'
 import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
+import { Route as ShellTripsIndexRouteImport } from './routes/_shell.trips.index'
 import { Route as ShellTripsIdRouteImport } from './routes/_shell.trips.$id'
 
 const ShellRoute = ShellRouteImport.update({
@@ -31,11 +31,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ShellTripsRoute = ShellTripsRouteImport.update({
-  id: '/trips',
-  path: '/trips',
-  getParentRoute: () => ShellRoute,
 } as any)
 const ShellSettingsRoute = ShellSettingsRouteImport.update({
   id: '/settings',
@@ -82,10 +77,15 @@ const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellTripsIndexRoute = ShellTripsIndexRouteImport.update({
+  id: '/trips/',
+  path: '/trips/',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellTripsIdRoute = ShellTripsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ShellTripsRoute,
+  id: '/trips/$id',
+  path: '/trips/$id',
+  getParentRoute: () => ShellRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -99,8 +99,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ShellProfileRoute
   '/recovery': typeof ShellRecoveryRoute
   '/settings': typeof ShellSettingsRoute
-  '/trips': typeof ShellTripsRouteWithChildren
   '/trips/$id': typeof ShellTripsIdRoute
+  '/trips/': typeof ShellTripsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -113,8 +113,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ShellProfileRoute
   '/recovery': typeof ShellRecoveryRoute
   '/settings': typeof ShellSettingsRoute
-  '/trips': typeof ShellTripsRouteWithChildren
   '/trips/$id': typeof ShellTripsIdRoute
+  '/trips': typeof ShellTripsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -129,8 +129,8 @@ export interface FileRoutesById {
   '/_shell/profile': typeof ShellProfileRoute
   '/_shell/recovery': typeof ShellRecoveryRoute
   '/_shell/settings': typeof ShellSettingsRoute
-  '/_shell/trips': typeof ShellTripsRouteWithChildren
   '/_shell/trips/$id': typeof ShellTripsIdRoute
+  '/_shell/trips/': typeof ShellTripsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,8 +145,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recovery'
     | '/settings'
-    | '/trips'
     | '/trips/$id'
+    | '/trips/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,8 +159,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recovery'
     | '/settings'
-    | '/trips'
     | '/trips/$id'
+    | '/trips'
   id:
     | '__root__'
     | '/'
@@ -174,8 +174,8 @@ export interface FileRouteTypes {
     | '/_shell/profile'
     | '/_shell/recovery'
     | '/_shell/settings'
-    | '/_shell/trips'
     | '/_shell/trips/$id'
+    | '/_shell/trips/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,13 +198,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_shell/trips': {
-      id: '/_shell/trips'
-      path: '/trips'
-      fullPath: '/trips'
-      preLoaderRoute: typeof ShellTripsRouteImport
-      parentRoute: typeof ShellRoute
     }
     '/_shell/settings': {
       id: '/_shell/settings'
@@ -269,27 +262,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAnalyticsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/trips/': {
+      id: '/_shell/trips/'
+      path: '/trips'
+      fullPath: '/trips/'
+      preLoaderRoute: typeof ShellTripsIndexRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/trips/$id': {
       id: '/_shell/trips/$id'
-      path: '/$id'
+      path: '/trips/$id'
       fullPath: '/trips/$id'
       preLoaderRoute: typeof ShellTripsIdRouteImport
-      parentRoute: typeof ShellTripsRoute
+      parentRoute: typeof ShellRoute
     }
   }
 }
-
-interface ShellTripsRouteChildren {
-  ShellTripsIdRoute: typeof ShellTripsIdRoute
-}
-
-const ShellTripsRouteChildren: ShellTripsRouteChildren = {
-  ShellTripsIdRoute: ShellTripsIdRoute,
-}
-
-const ShellTripsRouteWithChildren = ShellTripsRoute._addFileChildren(
-  ShellTripsRouteChildren,
-)
 
 interface ShellRouteChildren {
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
@@ -301,7 +289,8 @@ interface ShellRouteChildren {
   ShellProfileRoute: typeof ShellProfileRoute
   ShellRecoveryRoute: typeof ShellRecoveryRoute
   ShellSettingsRoute: typeof ShellSettingsRoute
-  ShellTripsRoute: typeof ShellTripsRouteWithChildren
+  ShellTripsIdRoute: typeof ShellTripsIdRoute
+  ShellTripsIndexRoute: typeof ShellTripsIndexRoute
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
@@ -314,7 +303,8 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellProfileRoute: ShellProfileRoute,
   ShellRecoveryRoute: ShellRecoveryRoute,
   ShellSettingsRoute: ShellSettingsRoute,
-  ShellTripsRoute: ShellTripsRouteWithChildren,
+  ShellTripsIdRoute: ShellTripsIdRoute,
+  ShellTripsIndexRoute: ShellTripsIndexRoute,
 }
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
