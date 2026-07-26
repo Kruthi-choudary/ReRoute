@@ -959,7 +959,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 /* ------------------------- PAGE ------------------------- */
 function Landing() {
   return (
-    <div className="relative overflow-x-hidden">
+    <div className="relative">
       <Nav />
       <main>
         <Hero />
