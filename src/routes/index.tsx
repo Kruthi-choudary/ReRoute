@@ -196,8 +196,8 @@ function Hero() {
   const origFade = useTransform(p, [0.42, 0.6], [1, 0.15]);
 
   const headlineLine2 = useMemo(() => {
-    if (phase >= 5) return "Already Recovered.";
-    if (phase >= 3) return "Disruption Ahead.";
+    if (phase >= 5) return "Recovery.";
+    if (phase >= 3) return "Disruption.";
     return "Interruptions.";
   }, [phase]);
 
