@@ -496,7 +496,7 @@ function PlaneOnPath({
           alt=""
           width={1600}
           height={1200}
-          className="w-[38vw] max-w-[560px] min-w-[280px] select-none drop-shadow-[0_30px_40px_rgba(15,23,42,0.25)]"
+          className="w-[30vw] max-w-[460px] min-w-[240px] select-none drop-shadow-[0_30px_40px_rgba(15,23,42,0.25)]"
           draggable={false}
         />
       </motion.div>
