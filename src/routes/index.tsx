@@ -86,18 +86,20 @@ function Nav() {
  */
 
 // Path space uses viewBox 1000 x 700, aligned to full-viewport SVG.
+// Kept on the right half of the stage so it doesn't cross the headline.
 const ORIGINAL_PATH =
-  "M -40 640 C 160 600, 300 560, 460 500 S 760 380, 1040 320";
+  "M 380 640 C 500 600, 600 560, 680 500 S 900 380, 1080 300";
 const REROUTE_PATH =
-  "M -40 640 C 160 600, 300 560, 460 500 C 560 460, 640 380, 640 300 " +
-  "C 640 220, 800 160, 1040 60";
+  "M 380 640 C 500 600, 600 560, 680 500 C 740 470, 780 400, 760 320 " +
+  "C 740 220, 880 140, 1080 40";
 
 const CITIES: { name: string; code: string; x: number; y: number }[] = [
-  { name: "Hyderabad", code: "HYD", x: 40,  y: 640 },
-  { name: "Dubai",     code: "DXB", x: 330, y: 560 },
-  { name: "London",    code: "LHR", x: 570, y: 445 },
-  { name: "New York",  code: "JFK", x: 1000, y: 60  },
+  { name: "Hyderabad", code: "HYD", x: 380,  y: 640 },
+  { name: "Dubai",     code: "DXB", x: 580,  y: 550 },
+  { name: "London",    code: "LHR", x: 740,  y: 460 },
+  { name: "New York",  code: "JFK", x: 1040, y: 50  },
 ];
+
 
 const RECOVERY_ITEMS = [
   { icon: Plane,  label: "New Flight Booked" },
