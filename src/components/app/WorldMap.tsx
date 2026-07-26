@@ -61,6 +61,7 @@ export function WorldMap({
               cy={s.y}
               r={s.r}
               fill="rgba(220,38,38,0.08)"
+              initial={{ cx: s.x, opacity: 0.5 }}
               animate={{ cx: [s.x, s.x + 2.4, s.x], opacity: [0.5, 0.9, 0.5] }}
               transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -69,6 +70,7 @@ export function WorldMap({
               cy={s.y}
               r={s.r * 0.45}
               fill="rgba(220,38,38,0.18)"
+              initial={{ cx: s.x }}
               animate={{ cx: [s.x, s.x + 2.4, s.x] }}
               transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
             />
