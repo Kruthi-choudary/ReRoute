@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion, useScroll, useTransform, useMotionValue, useMotionValueEvent,
-  AnimatePresence, useSpring,
+  AnimatePresence, useSpring, useMotionTemplate,
 } from "framer-motion";
 import {
   Plane, Radar, Sparkles, Bell, ShieldCheck, Hotel, Car, Ticket,
   ArrowRight, Play, Check, CloudLightning, ChevronDown,
-  LineChart, Headphones, Lock, Zap, Menu, X,
+  LineChart, Headphones, Lock, Zap, Menu, X, Wifi, QrCode,
 } from "lucide-react";
 import planeImg from "@/assets/plane-front.png";
 
