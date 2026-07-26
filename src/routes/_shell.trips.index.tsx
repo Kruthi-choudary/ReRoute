@@ -179,7 +179,7 @@ function TripCard({ trip, index, span }: { trip: Trip; index: number; span: "tal
   );
 }
 
-export const Route = createFileRoute("/_shell/trips")({
+export const Route = createFileRoute("/_shell/trips/")({
   component: TripsPage,
   head: () => ({
     meta: [
