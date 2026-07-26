@@ -16,6 +16,7 @@ import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellRecoveryRouteImport } from './routes/_shell.recovery'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 import { Route as ShellHotelsRouteImport } from './routes/_shell.hotels'
+import { Route as ShellHistoryRouteImport } from './routes/_shell.history'
 import { Route as ShellDashboardRouteImport } from './routes/_shell.dashboard'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
 import { Route as ShellTripsIdRouteImport } from './routes/_shell.trips.$id'
@@ -54,6 +55,11 @@ const ShellHotelsRoute = ShellHotelsRouteImport.update({
   path: '/hotels',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellHistoryRoute = ShellHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellDashboardRoute = ShellDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/dashboard': typeof ShellDashboardRoute
+  '/history': typeof ShellHistoryRoute
   '/hotels': typeof ShellHotelsRoute
   '/notifications': typeof ShellNotificationsRoute
   '/recovery': typeof ShellRecoveryRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/dashboard': typeof ShellDashboardRoute
+  '/history': typeof ShellHistoryRoute
   '/hotels': typeof ShellHotelsRoute
   '/notifications': typeof ShellNotificationsRoute
   '/recovery': typeof ShellRecoveryRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/dashboard': typeof ShellDashboardRoute
+  '/_shell/history': typeof ShellHistoryRoute
   '/_shell/hotels': typeof ShellHotelsRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
   '/_shell/recovery': typeof ShellRecoveryRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/history'
     | '/hotels'
     | '/notifications'
     | '/recovery'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/history'
     | '/hotels'
     | '/notifications'
     | '/recovery'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_shell'
     | '/_shell/analytics'
     | '/_shell/dashboard'
+    | '/_shell/history'
     | '/_shell/hotels'
     | '/_shell/notifications'
     | '/_shell/recovery'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellHotelsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/history': {
+      id: '/_shell/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof ShellHistoryRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/dashboard': {
       id: '/_shell/dashboard'
       path: '/dashboard'
@@ -237,6 +256,7 @@ const ShellTripsRouteWithChildren = ShellTripsRoute._addFileChildren(
 interface ShellRouteChildren {
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
   ShellDashboardRoute: typeof ShellDashboardRoute
+  ShellHistoryRoute: typeof ShellHistoryRoute
   ShellHotelsRoute: typeof ShellHotelsRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
   ShellRecoveryRoute: typeof ShellRecoveryRoute
@@ -247,6 +267,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellAnalyticsRoute: ShellAnalyticsRoute,
   ShellDashboardRoute: ShellDashboardRoute,
+  ShellHistoryRoute: ShellHistoryRoute,
   ShellHotelsRoute: ShellHotelsRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
   ShellRecoveryRoute: ShellRecoveryRoute,
