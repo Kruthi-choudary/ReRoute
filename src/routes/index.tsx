@@ -923,62 +923,121 @@ function Stats() {
   );
 }
 
-/* ------------------------- TESTIMONIALS ------------------------- */
+/* ------------------------- TESTIMONIALS (BOARDING PASSES) ------------------------- */
 const TESTIMONIALS = [
-  { q: "Our storm cancellations used to derail entire itineraries. Now they're a footnote in the traveler's inbox.", n: "Amelia Whitfield", r: "Head of Global Mobility, Northwind", c: "United Kingdom" },
-  { q: "It rebooked twelve executives in ninety seconds during the JFK ground stop. That's not software — that's an ally.", n: "Marcus Tan", r: "Director of Travel, Vantage Group", c: "Singapore" },
-  { q: "The best product decision we made this year. Travelers stopped calling support because there was nothing to call about.", n: "Sofia Almeida", r: "COO, Meridian Consulting", c: "Portugal" },
+  { q: "Our storm cancellations used to derail entire itineraries. Now they're a footnote in the traveler's inbox.", n: "Amelia Whitfield", r: "Head of Global Mobility, Northwind", from: "LHR", to: "JFK", flight: "RR 248", seat: "3A", gate: "B12", date: "26 JUL", cls: "Business", c: "United Kingdom" },
+  { q: "It rebooked twelve executives in ninety seconds during the JFK ground stop. That's not software — that's an ally.", n: "Marcus Tan", r: "Director of Travel, Vantage Group", from: "SIN", to: "SFO", flight: "RR 617", seat: "1F", gate: "A04", date: "12 AUG", cls: "First", c: "Singapore" },
+  { q: "The best decision we made this year. Travelers stopped calling support because there was nothing to call about.", n: "Sofia Almeida", r: "COO, Meridian Consulting", from: "LIS", to: "DXB", flight: "RR 092", seat: "5C", gate: "C21", date: "03 SEP", cls: "Business", c: "Portugal" },
 ];
-function Testimonials() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI((x) => (x + 1) % TESTIMONIALS.length), 6000);
-    return () => clearInterval(id);
-  }, []);
+
+function BoardingPass({ t, rotate = 0 }: { t: typeof TESTIMONIALS[number]; rotate?: number }) {
   return (
-    <section className="relative bg-white py-28">
-      <div className="mx-auto max-w-4xl px-6 text-center">
-        <SectionEyebrow>Testimonials</SectionEyebrow>
-        <SectionTitle>Quiet trust from loud industries.</SectionTitle>
-        <div className="relative mt-14 h-64 md:h-56">
-          <AnimatePresence mode="wait">
-            <motion.figure
-              key={i}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex flex-col items-center"
-            >
-              <blockquote className="text-[22px] font-medium leading-snug tracking-tight md:text-[26px]">
-                &ldquo;{TESTIMONIALS[i].q}&rdquo;
-              </blockquote>
-              <figcaption className="mt-6 flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold text-white">
-                  {TESTIMONIALS[i].n.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-semibold">{TESTIMONIALS[i].n}</div>
-                  <div className="text-xs text-secondary">{TESTIMONIALS[i].r} · {TESTIMONIALS[i].c}</div>
-                </div>
-              </figcaption>
-            </motion.figure>
-          </AnimatePresence>
+    <motion.figure
+      whileHover={{ y: -8, rotate: 0, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      style={{ rotate }}
+      className="relative w-full max-w-md overflow-hidden rounded-[22px] border border-border/70 bg-white shadow-[var(--shadow-float)]"
+    >
+      {/* Perforation */}
+      <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-4 -translate-y-1/2">
+        <div className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background" />
+        <div className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background" />
+        <div className="mx-4 border-t border-dashed border-border" />
+      </div>
+
+      <div className="grid grid-cols-[1fr_120px]">
+        {/* Left — quote */}
+        <div className="p-6">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+            <span className="grid h-5 w-5 place-items-center rounded-md bg-primary text-primary-foreground"><Plane className="h-2.5 w-2.5 -rotate-45" /></span>
+            ReRoute AI · Boarding Pass
+          </div>
+          <div className="mt-5 flex items-end gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-secondary">From</div>
+              <div className="text-3xl font-semibold tracking-tight">{t.from}</div>
+            </div>
+            <div className="mb-1 flex-1 items-center px-2 text-secondary">
+              <div className="flex items-center gap-1">
+                <span className="h-px flex-1 bg-border" />
+                <Plane className="h-3 w-3 -rotate-45" />
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-widest text-secondary">To</div>
+              <div className="text-3xl font-semibold tracking-tight">{t.to}</div>
+            </div>
+          </div>
+
+          <blockquote className="mt-6 text-[14px] leading-relaxed text-foreground">
+            &ldquo;{t.q}&rdquo;
+          </blockquote>
+
+          <div className="mt-6 grid grid-cols-4 gap-3 border-t border-dashed border-border pt-4 text-[10px] uppercase tracking-widest text-secondary">
+            <div><div>Flight</div><div className="mt-0.5 text-[13px] font-semibold text-foreground normal-case tracking-normal">{t.flight}</div></div>
+            <div><div>Seat</div><div className="mt-0.5 text-[13px] font-semibold text-foreground normal-case tracking-normal">{t.seat}</div></div>
+            <div><div>Gate</div><div className="mt-0.5 text-[13px] font-semibold text-foreground normal-case tracking-normal">{t.gate}</div></div>
+            <div><div>Date</div><div className="mt-0.5 text-[13px] font-semibold text-foreground normal-case tracking-normal">{t.date}</div></div>
+          </div>
+
+          <figcaption className="mt-5 flex items-center gap-3 border-t border-dashed border-border pt-4">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-[11px] font-semibold text-white">
+              {t.n.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold">{t.n}</div>
+              <div className="text-[11px] text-secondary">{t.r} · {t.c}</div>
+            </div>
+          </figcaption>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-2">
-          {TESTIMONIALS.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setI(idx)}
-              className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-foreground" : "w-1.5 bg-border"}`}
-              aria-label={`Testimonial ${idx + 1}`}
-            />
+
+        {/* Right — stub */}
+        <div className="relative flex flex-col items-center justify-between bg-primary/5 p-5 text-center">
+          <div>
+            <div className="text-[9px] uppercase tracking-widest text-secondary">Class</div>
+            <div className="mt-1 text-[13px] font-semibold text-primary">{t.cls}</div>
+          </div>
+          <div className="grid h-14 w-14 place-items-center rounded-md bg-white text-secondary shadow-sm">
+            <QrCode className="h-10 w-10" strokeWidth={1.5} />
+          </div>
+          <div className="text-[9px] uppercase tracking-widest text-secondary" style={{ writingMode: "vertical-rl" }}>
+            {t.flight} · {t.seat}
+          </div>
+        </div>
+      </div>
+    </motion.figure>
+  );
+}
+
+function Testimonials() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white to-background py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <SectionEyebrow>Testimonials</SectionEyebrow>
+          <SectionTitle>Quiet trust from loud industries.</SectionTitle>
+        </div>
+        <div className="relative mt-16 flex flex-wrap items-center justify-center gap-8">
+          {TESTIMONIALS.map((t, i) => (
+            <motion.div
+              key={t.n}
+              initial={{ opacity: 0, y: 40, rotate: 0 }}
+              whileInView={{ opacity: 1, y: 0, rotate: [-2.5, 1.5, -1][i] }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ delay: i * 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className={i === 1 ? "md:-mt-6" : ""}
+            >
+              <BoardingPass t={t} rotate={[-2.5, 1.5, -1][i]} />
+            </motion.div>
           ))}
         </div>
       </div>
     </section>
   );
 }
+
+
 
 /* ------------------------- FAQ ------------------------- */
 function FAQ() {
