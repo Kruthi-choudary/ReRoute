@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  motion, useScroll, useTransform, useMotionValue, useMotionValueEvent,
+  AnimatePresence, useSpring,
+} from "framer-motion";
 import {
   Plane, Radar, Sparkles, Bell, ShieldCheck, Hotel, Car, Ticket,
-  ArrowRight, Play, Check, CloudLightning, MapPin, ChevronDown,
-  Globe2, LineChart, Headphones, Building2, Lock, Zap, Menu, X,
+  ArrowRight, Play, Check, CloudLightning, ChevronDown,
+  LineChart, Headphones, Lock, Zap, Menu, X,
 } from "lucide-react";
-import heroPlane from "@/assets/hero-plane.jpg";
+import planeImg from "@/assets/plane-front.png";
 
 export const Route = createFileRoute("/")({
   component: Landing,
