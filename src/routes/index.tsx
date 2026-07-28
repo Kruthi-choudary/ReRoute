@@ -52,10 +52,10 @@ function Nav() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <a href="#" className="text-sm font-medium text-secondary transition hover:text-foreground">Login</a>
-          <a href="#cta" className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90">
+          <Link to="/login" className="text-sm font-medium text-secondary transition hover:text-foreground">Login</Link>
+          <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90">
             Get Started <ArrowRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </div>
         <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="menu">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -66,7 +66,7 @@ function Nav() {
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden bg-white/95 backdrop-blur-xl md:hidden">
             <div className="flex flex-col gap-4 px-6 py-6">
               {links.map((l) => <a key={l} href={`#${l.toLowerCase()}`} className="text-sm">{l}</a>)}
-              <a href="#cta" className="inline-flex w-fit items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm text-background">Get Started</a>
+              <Link to="/signup" className="inline-flex w-fit items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm text-background">Get Started</Link>
             </div>
           </motion.div>
         )}

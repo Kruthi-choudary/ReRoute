@@ -115,11 +115,11 @@ export function Field({ label, hint, id, type = "text", ...rest }: FieldProps) {
   );
 }
 
-export function PrimaryButton({ children, ...rest }: InputHTMLAttributes<HTMLButtonElement>) {
+export function PrimaryButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...(rest as object)}
-      className="h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(37,99,235,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-lift active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="h-12 disabled:cursor-not-allowed disabled:opacity-60 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(37,99,235,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-lift active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {children}
     </button>
