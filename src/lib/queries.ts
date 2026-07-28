@@ -144,6 +144,44 @@ function mapApiNotif(n: ApiNotification): NotificationItem {
   };
 }
 
+// ── Recovery / Policy types ───────────────────────────────────────────────
+
+interface ApiRecoveryAction {
+  id: number;
+  action_type: string;
+  status: string;
+  details: Record<string, unknown> | null;
+  executed_at: string | null;
+}
+
+interface ApiAlternative {
+  flight_iata?: string;
+  airline_name?: string;
+  airline_iata?: string;
+  dep_iata?: string;
+  arr_iata?: string;
+  price_est?: number;
+  score?: number;
+}
+
+export interface ApiRecoveryPlan {
+  id: number;
+  trip_id: number;
+  status: string; // ANALYZING | PLAN_READY | AWAITING_APPROVAL | EXECUTING | COMPLETED | FAILED
+  policy_decision: string | null;
+  total_extra_cost: number;
+  reasoning: string | null;
+  selected_flight: ApiAlternative[] | null;
+  actions: ApiRecoveryAction[];
+}
+
+export interface PolicyData {
+  autoSpendLimit: number;
+  approvalSpendLimit: number;
+  preferredCabin: string; // ECONOMY | PREMIUM_ECONOMY | BUSINESS
+  seatPreference: string; // WINDOW | AISLE | MIDDLE | null
+}
+
 // ── Hooks ─────────────────────────────────────────────────────────────────
 
 export function useTrips(): Trip[] {
@@ -160,6 +198,60 @@ export function useTrips(): Trip[] {
   });
   const mapped = (data ?? []).map(mapApiTrip);
   return mapped.length > 0 ? mapped : (TRIPS as unknown as Trip[]);
+}
+
+export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null {
+  const trips = useTrips();
+  const activeTripId = trips.find((t) => t.status === "Rerouted")?.id;
+  const isRealId = !!activeTripId && /^\d+$/.test(activeTripId);
+
+  const { data } = useQuery<ApiRecoveryPlan | null>({
+    queryKey: ["recovery", activeTripId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/recovery/${activeTripId}`);
+      if (!res.ok) return null;
+      return res.json() as Promise<ApiRecoveryPlan>;
+    },
+    enabled: isRealId,
+    staleTime: 10_000,
+  });
+
+  if (!data || !activeTripId) return null;
+  return { plan: data, tripId: activeTripId };
+}
+
+export function usePolicy(): PolicyData | null {
+  const { user } = useAuth();
+
+  const { data: policy } = useQuery({
+    queryKey: ["policy", user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/policies/${user!.id}`);
+      if (!res.ok) return null;
+      return res.json() as Promise<{ auto_spend_limit: number; approval_spend_limit: number; allowed_cabins: string[] }>;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const { data: prefs } = useQuery({
+    queryKey: ["preferences", user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/policies/${user!.id}/preferences`);
+      if (!res.ok) return null;
+      return res.json() as Promise<{ preferred_cabin: string; seat_preference: string | null }>;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  if (!policy) return null;
+  return {
+    autoSpendLimit: policy.auto_spend_limit,
+    approvalSpendLimit: policy.approval_spend_limit,
+    preferredCabin: prefs?.preferred_cabin ?? policy.allowed_cabins?.[0] ?? "ECONOMY",
+    seatPreference: prefs?.seat_preference ?? "WINDOW",
+  };
 }
 
 export function useNotifications(): NotificationItem[] {

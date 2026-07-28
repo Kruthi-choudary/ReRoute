@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Panel, PageHeader, Eyebrow, Pill, Ring, CountUp, Reveal } from "@/components/app/primitives";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 import {
   Award, Leaf, Globe2, Plane, Star, Zap, Shield, Crown, MapPin, Gem,
 } from "lucide-react";
@@ -50,7 +51,14 @@ function toneColor(tone: "primary" | "success" | "warning" | "muted") {
   return tone === "success" ? "var(--success)" : tone === "warning" ? "var(--warning)" : tone === "primary" ? "var(--primary)" : "var(--muted-foreground)";
 }
 
+function initials(name: string) {
+  return name.split(" ").map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
+}
+
 function ProfilePage() {
+  const { user } = useAuth();
+  const displayName = user?.name ?? "Traveler";
+  const displayInitials = user?.name ? initials(user.name) : "?";
   return (
     <div className="space-y-10">
       <PageHeader
@@ -74,10 +82,10 @@ function ProfilePage() {
 
             <div className="mt-6 flex items-center gap-5">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-gradient-to-br from-primary/20 to-primary/5 text-2xl font-semibold tracking-tight text-primary shadow-inner">
-                EV
+                {displayInitials}
               </div>
               <div className="space-y-1.5">
-                <p className="text-xl font-semibold tracking-tight text-foreground">Elena Voss</p>
+                <p className="text-xl font-semibold tracking-tight text-foreground">{displayName}</p>
                 <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Member since 2019</p>
                 <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Nationality: United States</p>
               </div>

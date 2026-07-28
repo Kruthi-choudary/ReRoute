@@ -5,6 +5,10 @@ import { Panel, PageHeader, Eyebrow, Pill, Reveal } from "@/components/app/primi
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
+import { apiFetch } from "@/lib/api";
+import { usePolicy } from "@/lib/queries";
 import {
   Plane, Armchair, Award, CreditCard, ShieldAlert, Lock, Bell, Gauge, Moon, Plus, Check,
 } from "lucide-react";
@@ -21,11 +25,7 @@ export const Route = createFileRoute("/_shell/settings")({
   }),
 });
 
-type Section = {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-};
+type Section = { id: string; label: string; icon: React.ElementType };
 
 const SECTIONS: Section[] = [
   { id: "travel", label: "Travel preferences", icon: Plane },
@@ -38,15 +38,7 @@ const SECTIONS: Section[] = [
   { id: "appearance", label: "Appearance", icon: Moon },
 ];
 
-function Row({
-  title,
-  desc,
-  control,
-}: {
-  title: string;
-  desc?: string;
-  control: React.ReactNode;
-}) {
+function Row({ title, desc, control }: { title: string; desc?: string; control: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-6 border-b border-border/60 py-4 last:border-b-0">
       <div className="min-w-0">
@@ -62,17 +54,8 @@ function Segmented({ options, value, onChange }: { options: string[]; value: str
   return (
     <div className="inline-flex rounded-full border border-border/60 bg-muted p-1">
       {options.map((o) => (
-        <button
-          key={o}
-          onClick={() => onChange(o)}
-          className={cn(
-            "relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-            value === o ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {value === o && (
-            <motion.span layoutId="seg-active" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.5 }} />
-          )}
+        <button key={o} onClick={() => onChange(o)} className={cn("relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors", value === o ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+          {value === o && <motion.span layoutId="seg-active" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.5 }} />}
           <span className="relative z-10">{o}</span>
         </button>
       ))}
@@ -99,27 +82,77 @@ const RULES = [
   { id: 4, cond: "fare drop > $50", action: "auto rebook if refundable", on: false },
 ];
 
+const CABIN_TO_API: Record<string, string> = {
+  Economy: "ECONOMY",
+  Premium: "PREMIUM_ECONOMY",
+  Business: "BUSINESS",
+};
+const CABIN_FROM_API: Record<string, string> = {
+  ECONOMY: "Economy",
+  PREMIUM_ECONOMY: "Premium",
+  BUSINESS: "Business",
+};
+const SEAT_TO_API: Record<string, string> = { Window: "WINDOW", Aisle: "AISLE", Middle: "MIDDLE" };
+const SEAT_FROM_API: Record<string, string> = { WINDOW: "Window", AISLE: "Aisle", MIDDLE: "Middle" };
+
 function SettingsPage() {
+  const { user } = useAuth();
+  const policyData = usePolicy();
   const [seat, setSeat] = useState("Window");
   const [cabin, setCabin] = useState("Business");
   const [threshold, setThreshold] = useState([650]);
   const [dark, setDark] = useState(false);
   const [rules, setRules] = useState(RULES);
   const [active, setActive] = useState("travel");
+  const [saving, setSaving] = useState(false);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Initialise from loaded policy
+  useEffect(() => {
+    if (policyData) {
+      setSeat(SEAT_FROM_API[policyData.seatPreference] ?? "Window");
+      setCabin(CABIN_FROM_API[policyData.preferredCabin] ?? "Business");
+      setThreshold([Math.round(policyData.autoSpendLimit)]);
+    }
+  }, [policyData]);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setActive(e.target.id);
-        });
-      },
+      (entries) => { entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); }); },
       { rootMargin: "-20% 0px -60% 0px", threshold: 0.1 },
     );
     Object.values(refs.current).forEach((el) => el && obs.observe(el));
     return () => obs.disconnect();
   }, []);
+
+  async function saveTravelPrefs() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/policies/${user.id}/preferences`, {
+        method: "PUT",
+        body: JSON.stringify({ preferred_cabin: CABIN_TO_API[cabin], seat_preference: SEAT_TO_API[seat] }),
+      });
+      toast.success("Travel preferences saved.");
+    } catch {
+      toast.error("Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveThreshold() {
+    if (!user) return;
+    try {
+      await apiFetch(`/api/policies/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ auto_spend_limit: threshold[0] }),
+      });
+      toast.success("Approval threshold saved.");
+    } catch {
+      toast.error("Failed to save.");
+    }
+  }
 
   return (
     <div className="space-y-10">
@@ -136,22 +169,10 @@ function SettingsPage() {
               const Icon = s.icon;
               const isActive = active === s.id;
               return (
-                <button
-                  key={s.id}
-                  onClick={() => refs.current[s.id]?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                  className="relative flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors"
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="settings-active-indicator"
-                      className="absolute inset-0 rounded-2xl bg-primary/10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                    />
-                  )}
+                <button key={s.id} onClick={() => refs.current[s.id]?.scrollIntoView({ behavior: "smooth", block: "start" })} className="relative flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors">
+                  {isActive && <motion.span layoutId="settings-active-indicator" className="absolute inset-0 rounded-2xl bg-primary/10" transition={{ type: "spring", bounce: 0.2, duration: 0.5 }} />}
                   <Icon className={cn("relative z-10 h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                  <span className={cn("relative z-10 font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
-                    {s.label}
-                  </span>
+                  <span className={cn("relative z-10 font-medium", isActive ? "text-primary" : "text-muted-foreground")}>{s.label}</span>
                 </button>
               );
             })}
@@ -162,8 +183,15 @@ function SettingsPage() {
           <div id="travel" ref={(el) => { refs.current.travel = el; }}>
             <Reveal>
               <Panel>
-                <Eyebrow className="mb-1">Travel preferences</Eyebrow>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Seat, cabin & airline defaults</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Eyebrow className="mb-1">Travel preferences</Eyebrow>
+                    <h2 className="mb-4 text-lg font-semibold text-foreground">Seat, cabin & airline defaults</h2>
+                  </div>
+                  <button onClick={saveTravelPrefs} disabled={saving} className="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50">
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                </div>
                 <Row title="Preferred seat" desc="Used when rebooking automatically." control={<Segmented options={["Window", "Aisle", "Middle"]} value={seat} onChange={setSeat} />} />
                 <Row title="Preferred cabin" desc="ReRoute will try to match or upgrade." control={<Segmented options={["Economy", "Premium", "Business"]} value={cabin} onChange={setCabin} />} />
                 <Row title="Preferred airline alliance" desc="Star Alliance, oneworld, SkyTeam" control={<Pill tone="primary">Star Alliance</Pill>} />
@@ -186,14 +214,7 @@ function SettingsPage() {
                         <span className="text-xs text-muted-foreground">{l.tier}</span>
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <motion.div
-                          className="h-full rounded-full"
-                          style={{ background: l.color }}
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${l.pct}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                        />
+                        <motion.div className="h-full rounded-full" style={{ background: l.color }} initial={{ width: 0 }} whileInView={{ width: `${l.pct}%` }} viewport={{ once: true }} transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }} />
                       </div>
                     </div>
                   ))}
@@ -212,11 +233,7 @@ function SettingsPage() {
                 <h2 className="mb-4 text-lg font-semibold text-foreground">Methods for rebooking & fees</h2>
                 <div className="flex flex-wrap gap-4">
                   {CARDS.map((c) => (
-                    <motion.div
-                      key={c.last4}
-                      whileHover={{ y: -4, rotate: -1 }}
-                      className={cn("relative h-28 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-background shadow-soft", c.hue)}
-                    >
+                    <motion.div key={c.last4} whileHover={{ y: -4, rotate: -1 }} className={cn("relative h-28 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-background shadow-soft", c.hue)}>
                       <p className="text-[10px] uppercase tracking-[0.16em] opacity-70">ReRoute Pay</p>
                       <p className="mt-6 font-mono text-sm tracking-widest">•••• {c.last4}</p>
                       <p className="mt-1 text-xs opacity-80">{c.name}</p>
@@ -238,15 +255,10 @@ function SettingsPage() {
                 <Eyebrow className="mb-1">Emergency</Eyebrow>
                 <h2 className="mb-4 text-lg font-semibold text-foreground">Contacts notified on major disruption</h2>
                 {[
-                  { name: "Elena Voss", rel: "Spouse", phone: "+1 (415) 555-0142" },
-                  { name: "Marcus Chen", rel: "Assistant", phone: "+1 (628) 555-0193" },
+                  { name: "Travel Companion", rel: "Companion", phone: "+1 (415) 555-0142" },
+                  { name: "Travel Assistant", rel: "Assistant", phone: "+1 (628) 555-0193" },
                 ].map((c) => (
-                  <Row
-                    key={c.name}
-                    title={c.name}
-                    desc={`${c.rel} · ${c.phone}`}
-                    control={<Switch defaultChecked />}
-                  />
+                  <Row key={c.name} title={c.name} desc={`${c.rel} · ${c.phone}`} control={<Switch defaultChecked />} />
                 ))}
                 <button className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
                   <Plus className="h-3.5 w-3.5" /> Add contact
@@ -282,10 +294,7 @@ function SettingsPage() {
                         <span className="text-muted-foreground">→</span>
                         <Pill tone="primary">{r.action}</Pill>
                       </div>
-                      <Switch
-                        checked={r.on}
-                        onCheckedChange={(v) => setRules((prev) => prev.map((x) => (x.id === r.id ? { ...x, on: v } : x)))}
-                      />
+                      <Switch checked={r.on} onCheckedChange={(v) => setRules((prev) => prev.map((x) => (x.id === r.id ? { ...x, on: v } : x)))} />
                     </div>
                   ))}
                 </div>
@@ -299,8 +308,15 @@ function SettingsPage() {
           <div id="auto" ref={(el) => { refs.current.auto = el; }}>
             <Reveal>
               <Panel>
-                <Eyebrow className="mb-1">Auto approval</Eyebrow>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Spend threshold for autonomous action</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Eyebrow className="mb-1">Auto approval</Eyebrow>
+                    <h2 className="mb-4 text-lg font-semibold text-foreground">Spend threshold for autonomous action</h2>
+                  </div>
+                  <button onClick={saveThreshold} className="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-80">
+                    Save
+                  </button>
+                </div>
                 <p className="mb-6 text-sm text-muted-foreground">
                   ReRoute AI will rebook and pay automatically for options at or below this cost difference. Anything above requires your approval.
                 </p>
@@ -310,11 +326,7 @@ function SettingsPage() {
                     <span className="text-lg font-semibold tabular-nums text-primary">${threshold[0]}</span>
                   </div>
                 </div>
-                <Row
-                  title="Require confirmation above threshold"
-                  desc="You'll get a push notification with 10 minutes to respond"
-                  control={<Switch defaultChecked />}
-                />
+                <Row title="Require confirmation above threshold" desc="You'll get a push notification with 10 minutes to respond" control={<Switch defaultChecked />} />
               </Panel>
             </Reveal>
           </div>
