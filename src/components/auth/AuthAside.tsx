@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
 
-const BADGES = [
-  "24/7 Flight Monitoring",
-  "Automatic Rebooking",
-  "Hotel Recovery",
-  "Smart Notifications",
+const DEFAULT_BADGES = [
+  "Secure Google Authentication",
+  "End-to-End Encrypted",
+  "Trusted by Global Travelers",
 ];
+
+export interface AuthAsideProps {
+  title?: string;
+  subtitle?: string;
+  badges?: string[];
+}
 
 /** Rough continental plates — abstract, not geographic data. */
 const LANDMASSES = [
