@@ -1,15 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { AuthLayout, AuthHeading, GoogleButton, Divider, Field, PrimaryButton } from "@/components/auth/AuthShell";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { useAuth, takeRedirect } from "@/lib/auth";
 
-const COUNTRIES = ["United States", "United Kingdom", "United Arab Emirates", "India", "Germany", "Singapore", "Japan", "Australia"];
+const COUNTRIES = [
+  "United States", "United Kingdom", "United Arab Emirates", "Canada", "India",
+  "Germany", "France", "Netherlands", "Singapore", "Japan", "Australia", "Brazil",
+];
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Create Account — ReRoute AI" },
-      { name: "description", content: "Create your ReRoute AI account and personalise autonomous flight monitoring, rebooking and hotel recovery." },
+      { name: "description", content: "Create your ReRoute AI account for autonomous flight monitoring, instant rebooking and hotel recovery." },
       { property: "og:title", content: "Create Account — ReRoute AI" },
-      { property: "og:description", content: "Let's personalize your travel experience with autonomous disruption recovery." },
+      { property: "og:description", content: "Start your smarter travel experience with autonomous disruption recovery." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -19,26 +27,83 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "", country: "" });
+  const [agree, setAgree] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (session) navigate({ to: takeRedirect(), replace: true });
+  }, [session, navigate]);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function handleGoogle() {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      setBusy(false);
+      toast.error(result.error.message ?? "Google sign-up failed.");
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: takeRedirect(), replace: true });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    if (!agree) {
+      toast.error("Please accept the Terms and Privacy Policy.");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { full_name: form.fullName, country: form.country },
+      },
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (data.session) {
+      navigate({ to: takeRedirect(), replace: true });
+    } else {
+      toast.success("Check your inbox to confirm your email, then sign in.");
+      navigate({ to: "/login" });
+    }
+  }
 
   return (
-    <AuthLayout>
-      <AuthHeading title="Create Your Account" subtitle="Let's personalize your travel experience." />
+    <AuthLayout
+      aside={{
+        title: "Travel Smarter with ReRoute AI",
+        subtitle:
+          "Join travelers who never manage a disruption alone. We watch every flight, predict delays, and rebuild your itinerary automatically.",
+      }}
+    >
+      <AuthHeading title="Create Your Account" subtitle="Start your smarter travel experience." />
 
-      <GoogleButton label="Continue with Google" onClick={() => navigate({ to: "/dashboard" })} />
+      <GoogleButton label="Continue with Google" onClick={handleGoogle} />
       <Divider />
 
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          navigate({ to: "/dashboard" });
-        }}
-      >
-        <Field label="Full Name" autoComplete="name" placeholder="Alex Morgan" required />
-        <Field label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <Field label="Full Name" autoComplete="name" placeholder="Alex Morgan" required value={form.fullName} onChange={set("fullName")} />
+        <Field label="Email" type="email" autoComplete="email" placeholder="you@example.com" required value={form.email} onChange={set("email")} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Password" type="password" autoComplete="new-password" placeholder="••••••••" required />
-          <Field label="Confirm Password" type="password" autoComplete="new-password" placeholder="••••••••" required />
+          <Field label="Password" type="password" autoComplete="new-password" placeholder="••••••••" required minLength={6} value={form.password} onChange={set("password")} />
+          <Field label="Confirm Password" type="password" autoComplete="new-password" placeholder="••••••••" required minLength={6} value={form.confirm} onChange={set("confirm")} />
         </div>
 
         <div className="space-y-1.5">
@@ -46,7 +111,8 @@ function SignUpPage() {
           <select
             id="country"
             required
-            defaultValue=""
+            value={form.country}
+            onChange={set("country")}
             className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm text-foreground outline-none transition-all duration-200 hover:border-foreground/20 focus:border-primary focus:ring-4 focus:ring-primary/12"
           >
             <option value="" disabled>Select your country</option>
@@ -56,28 +122,29 @@ function SignUpPage() {
           </select>
         </div>
 
-        <Field label="Phone (Optional)" type="tel" autoComplete="tel" placeholder="+1 555 000 1234" />
-
-        <label className="flex items-start gap-3 pt-1 text-[13px] leading-relaxed text-muted-foreground">
+        <label className="flex items-start gap-3 pt-1 text-[13px] text-muted-foreground">
           <input
             type="checkbox"
-            required
-            className="mt-0.5 h-4.5 w-4.5 rounded-md border-border text-primary accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            style={{ width: 18, height: 18 }}
+            checked={agree}
+            onChange={(e) => setAgree(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border text-primary accent-[var(--primary)]"
           />
           <span>
-            I agree to the <a href="#" className="font-medium text-primary hover:opacity-75">Terms &amp; Privacy Policy</a>
+            I agree to the <span className="font-medium text-foreground">Terms</span> and{" "}
+            <span className="font-medium text-foreground">Privacy Policy</span>
           </span>
         </label>
 
-        <div className="pt-2">
-          <PrimaryButton type="submit">Create Account</PrimaryButton>
+        <div className="pt-1">
+          <PrimaryButton type="submit" disabled={busy}>
+            {busy ? "Creating account…" : "Create Account"}
+          </PrimaryButton>
         </div>
       </form>
 
       <p className="mt-7 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/signin" className="font-semibold text-primary transition-opacity hover:opacity-75">
+        <Link to="/login" className="font-semibold text-primary transition-opacity hover:opacity-75">
           Sign In
         </Link>
       </p>
