@@ -213,7 +213,12 @@ export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null 
       return res.json() as Promise<ApiRecoveryPlan>;
     },
     enabled: isRealId,
-    staleTime: 10_000,
+    staleTime: 5_000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "ANALYZING" || status === "PLAN_READY" || status === "EXECUTING") return 4_000;
+      return false;
+    },
   });
 
   if (!data || !activeTripId) return null;
