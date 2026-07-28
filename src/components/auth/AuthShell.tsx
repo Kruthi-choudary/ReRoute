@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { AuthAside, type AuthAsideProps } from "./AuthAside";
 
@@ -115,7 +115,7 @@ export function Field({ label, hint, id, type = "text", ...rest }: FieldProps) {
   );
 }
 
-export function PrimaryButton({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function PrimaryButton({ children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...(rest as object)}
