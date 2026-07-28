@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
@@ -23,6 +25,16 @@ import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
 import { Route as ShellTripsIndexRouteImport } from './routes/_shell.trips.index'
 import { Route as ShellTripsIdRouteImport } from './routes/_shell.trips.$id'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
   getParentRoute: () => rootRouteImport,
@@ -90,6 +102,8 @@ const ShellTripsIdRoute = ShellTripsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/dashboard': typeof ShellDashboardRoute
@@ -104,6 +118,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/dashboard': typeof ShellDashboardRoute
@@ -120,6 +136,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_shell': typeof ShellRouteWithChildren
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/dashboard': typeof ShellDashboardRoute
@@ -136,6 +154,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/signin'
+    | '/signup'
     | '/analytics'
     | '/assistant'
     | '/dashboard'
@@ -150,6 +170,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/signin'
+    | '/signup'
     | '/analytics'
     | '/assistant'
     | '/dashboard'
@@ -165,6 +187,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_shell'
+    | '/signin'
+    | '/signup'
     | '/_shell/analytics'
     | '/_shell/assistant'
     | '/_shell/dashboard'
@@ -181,10 +205,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ShellRoute: typeof ShellRouteWithChildren
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_shell': {
       id: '/_shell'
       path: ''
@@ -312,17 +352,9 @@ const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ShellRoute: ShellRouteWithChildren,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
