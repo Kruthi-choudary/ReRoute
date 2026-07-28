@@ -18,6 +18,7 @@ import { Panel, Eyebrow, CountUp, Ring, Pill, Reveal, LiveDot } from "@/componen
 import { WorldMap } from "@/components/app/WorldMap";
 import { RECOVERY_STEPS, type Trip } from "@/lib/travel-data";
 import { useTrips, useNotifications } from "@/lib/queries";
+import { useRecoverySocket } from "@/lib/useRecoverySocket";
 
 export const Route = createFileRoute("/_shell/dashboard")({
   component: Dashboard,
@@ -42,6 +43,8 @@ function Dashboard() {
   const trips = useTrips();
   const notifications = useNotifications();
   const trip = trips[0]!;
+  const reroutedTrip = trips.find((t) => t.status === "Rerouted");
+  useRecoverySocket(reroutedTrip?.id ?? null);
 
   return (
     <div className="space-y-6">

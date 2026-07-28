@@ -216,7 +216,8 @@ export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null 
     staleTime: 5_000,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (status === "ANALYZING" || status === "PLAN_READY" || status === "EXECUTING") return 4_000;
+      // WebSocket handles real-time; this is a fallback if the connection drops
+      if (status === "ANALYZING" || status === "PLAN_READY" || status === "EXECUTING") return 30_000;
       return false;
     },
   });

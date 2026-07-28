@@ -5,6 +5,7 @@ import { CheckCircle2, CircleDashed, Loader2, Plane, DollarSign, Clock, Gauge, X
 import { Panel, Eyebrow, PageHeader, CountUp, Pill, Reveal, LiveDot } from "@/components/app/primitives";
 import { RECOVERY_STEPS, type RecoveryStep } from "@/lib/travel-data";
 import { useRecovery, type ApiRecoveryPlan } from "@/lib/queries";
+import { useRecoverySocket } from "@/lib/useRecoverySocket";
 import { apiFetch } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -124,6 +125,7 @@ function statusPill(status: string) {
 function RecoveryCenter() {
   const recovery = useRecovery();
   const queryClient = useQueryClient();
+  useRecoverySocket(recovery?.tripId);
 
   const steps: RecoveryStep[] = recovery ? mapPlanToSteps(recovery.plan) : RECOVERY_STEPS;
   const candidates: Candidate[] = recovery
