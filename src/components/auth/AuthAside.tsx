@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
 
-const BADGES = [
-  "24/7 Flight Monitoring",
-  "Automatic Rebooking",
-  "Hotel Recovery",
-  "Smart Notifications",
+const DEFAULT_BADGES = [
+  "Secure Google Authentication",
+  "End-to-End Encrypted",
+  "Trusted by Global Travelers",
 ];
+
+export interface AuthAsideProps {
+  title?: string;
+  subtitle?: string;
+  badges?: string[];
+}
 
 /** Rough continental plates — abstract, not geographic data. */
 const LANDMASSES = [
@@ -45,7 +50,8 @@ function Cloud({ x, y, s, delay }: { x: number; y: number; s: number; delay: num
  * an animated flight path with a plane, pulsing destination pins and
  * floating boarding-pass / passport / luggage vignettes.
  */
-export function AuthAside() {
+export function AuthAside({ title, subtitle, badges }: AuthAsideProps = {}) {
+  const items = badges ?? DEFAULT_BADGES;
   return (
     <aside className="relative hidden overflow-hidden bg-[linear-gradient(160deg,#eaf1ff_0%,#f6f9ff_45%,#eef6ff_100%)] lg:flex lg:w-[55%]">
       {/* map + sky layer */}
@@ -125,17 +131,16 @@ export function AuthAside() {
             ReRoute AI · Autonomous travel recovery
           </span>
 
-          <h1 className="mt-7 max-w-[13ch] text-5xl font-semibold leading-[1.05] tracking-tight text-foreground xl:text-6xl">
-            Your Journey Starts Here.
+          <h1 className="mt-7 max-w-[15ch] text-5xl font-semibold leading-[1.05] tracking-tight text-foreground xl:text-6xl">
+            {title ?? "Welcome Back to ReRoute AI"}
           </h1>
 
           <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground">
-            Sign in once. We'll monitor every flight, detect disruptions, and
-            recover your journey automatically.
+            {subtitle ?? "Your intelligent travel companion is ready to monitor your journey, detect disruptions, and recover your itinerary automatically."}
           </p>
 
           <ul className="mt-10 flex max-w-md flex-wrap gap-2.5">
-            {BADGES.map((b, i) => (
+            {items.map((b, i) => (
               <motion.li
                 key={b}
                 initial={{ opacity: 0, y: 10 }}

@@ -1,23 +1,29 @@
 import { motion } from "framer-motion";
-import { useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { AuthAside } from "./AuthAside";
+import { AuthAside, type AuthAsideProps } from "./AuthAside";
 
-export function AuthLayout({ children }: { children: ReactNode }) {
+export function AuthLayout({ children, aside }: { children: ReactNode; aside?: AuthAsideProps }) {
   return (
-    <div className="flex min-h-screen bg-background">
-      <AuthAside />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="flex min-h-screen bg-background"
+    >
+      <AuthAside {...aside} />
       <main className="flex w-full items-center justify-center px-5 py-12 sm:px-8 lg:w-[45%]">
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, x: 44, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.65, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-[440px] rounded-[24px] border border-border/70 bg-card p-7 shadow-float sm:p-9"
         >
           {children}
         </motion.div>
       </main>
-    </div>
+    </motion.div>
   );
 }
 
@@ -109,11 +115,11 @@ export function Field({ label, hint, id, type = "text", ...rest }: FieldProps) {
   );
 }
 
-export function PrimaryButton({ children, ...rest }: InputHTMLAttributes<HTMLButtonElement>) {
+export function PrimaryButton({ children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...(rest as object)}
-      className="h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(37,99,235,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-lift active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="h-12 disabled:cursor-not-allowed disabled:opacity-60 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(37,99,235,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-lift active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {children}
     </button>

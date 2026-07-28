@@ -1,18 +1,38 @@
-import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { TopBar } from "@/components/app/TopBar";
 import { CommandPalette } from "@/components/app/CommandPalette";
 import { NAV_ITEMS } from "@/lib/travel-data";
+import { useAuth, rememberRedirect } from "@/lib/auth";
 
 export const Route = createFileRoute("/_shell")({
+  ssr: false,
   component: ShellLayout,
 });
 
 function ShellLayout() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !session) {
+      rememberRedirect(pathname);
+      navigate({ to: "/login", replace: true });
+    }
+  }, [loading, session, pathname, navigate]);
+
+  if (loading || !session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-label="Loading" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background">
