@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { Panel, Eyebrow, CountUp, Ring, Pill, Reveal, LiveDot } from "@/components/app/primitives";
 import { WorldMap } from "@/components/app/WorldMap";
-import { RECOVERY_STEPS, TRIPS, NOTIFICATIONS } from "@/lib/travel-data";
+import { RECOVERY_STEPS, type Trip } from "@/lib/travel-data";
+import { useTrips, useNotifications } from "@/lib/queries";
 
 export const Route = createFileRoute("/_shell/dashboard")({
   component: Dashboard,
@@ -38,7 +39,9 @@ const QUICK_ACTIONS = [
 ];
 
 function Dashboard() {
-  const trip = TRIPS[0];
+  const trips = useTrips();
+  const notifications = useNotifications();
+  const trip = trips[0]!;
 
   return (
     <div className="space-y-6">
@@ -194,7 +197,7 @@ function Dashboard() {
 
         {/* Boarding pass */}
         <Reveal delay={0.18} className="col-span-12 md:col-span-4">
-          <BoardingPass />
+          <BoardingPass trip={trip} />
         </Reveal>
 
         {/* Upcoming flights */}
@@ -202,10 +205,10 @@ function Dashboard() {
           <Panel>
             <div className="flex items-center justify-between">
               <Eyebrow>Upcoming flights</Eyebrow>
-              <Pill tone="muted"><Plane className="h-3 w-3" /> {TRIPS.length} planned</Pill>
+              <Pill tone="muted"><Plane className="h-3 w-3" /> {trips.length} planned</Pill>
             </div>
             <div className="mt-5 space-y-3">
-              {TRIPS.slice(0, 3).map((t) => (
+              {trips.slice(0, 3).map((t) => (
                 <motion.div
                   key={t.id}
                   whileHover={{ x: 4 }}
@@ -242,7 +245,7 @@ function Dashboard() {
               <Bell className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="mt-5 space-y-4">
-              {NOTIFICATIONS.slice(0, 3).map((n) => (
+              {notifications.slice(0, 3).map((n) => (
                 <div key={n.id} className="flex items-start gap-3">
                   <span className={"mt-1.5 h-2 w-2 shrink-0 rounded-full " + (n.unread ? "bg-primary" : "bg-border")} />
                   <div>
@@ -284,8 +287,7 @@ function RainCloud() {
   );
 }
 
-function BoardingPass() {
-  const t = TRIPS[0];
+function BoardingPass({ trip: t }: { trip: Trip }) {
   return (
     <Panel className="h-full" padded={false}>
       <div className={`relative overflow-hidden rounded-t-3xl bg-gradient-to-br ${t.hue} p-5 text-background`}>

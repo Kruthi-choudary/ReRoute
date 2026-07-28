@@ -1,10 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AuthLayout, AuthHeading, GoogleButton, Divider, Field, PrimaryButton } from "@/components/auth/AuthShell";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { AuthLayout, AuthHeading, Field, PrimaryButton } from "@/components/auth/AuthShell";
 import { useAuth, takeRedirect } from "@/lib/auth";
+import { apiFetch } from "@/lib/api";
 
 const COUNTRIES = [
   "United States", "United Kingdom", "United Arab Emirates", "Canada", "India",
@@ -27,7 +26,7 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, setSession } = useAuth();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "", country: "" });
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,20 +37,6 @@ function SignUpPage() {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  async function handleGoogle() {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error(result.error.message ?? "Google sign-up failed.");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: takeRedirect(), replace: true });
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,24 +49,26 @@ function SignUpPage() {
       return;
     }
     setBusy(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: form.fullName, country: form.country },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (data.session) {
+    try {
+      const res = await apiFetch("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ email: form.email, password: form.password, name: form.fullName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error((data as { detail?: string }).detail ?? "Registration failed.");
+        return;
+      }
+      setSession((data as { token: string; id: number; email: string; name: string }).token, {
+        id: (data as { id: number }).id,
+        email: (data as { email: string }).email,
+        name: (data as { name: string }).name,
+      });
       navigate({ to: takeRedirect(), replace: true });
-    } else {
-      toast.success("Check your inbox to confirm your email, then sign in.");
-      navigate({ to: "/login" });
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -94,9 +81,6 @@ function SignUpPage() {
       }}
     >
       <AuthHeading title="Create Your Account" subtitle="Start your smarter travel experience." />
-
-      <GoogleButton label="Continue with Google" onClick={handleGoogle} />
-      <Divider />
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <Field label="Full Name" autoComplete="name" placeholder="Alex Morgan" required value={form.fullName} onChange={set("fullName")} />

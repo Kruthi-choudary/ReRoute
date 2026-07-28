@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Panel, Eyebrow, Pill, Reveal } from "@/components/app/primitives";
-import { TRIPS } from "@/lib/travel-data";
+import { useTrips } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const ITINERARY = [
@@ -60,8 +60,9 @@ export const Route = createFileRoute("/_shell/trips/$id")({
 });
 
 function TripDetailPage() {
+  const trips = useTrips();
   const { id } = Route.useParams();
-  const trip = TRIPS.find((t) => t.id === id) ?? TRIPS[0];
+  const trip = trips.find((t) => t.id === id) ?? trips[0]!;
   const [rate, setRate] = useState(50);
   const [openLeg, setOpenLeg] = useState<number | null>(1);
 

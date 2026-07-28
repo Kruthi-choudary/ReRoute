@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Panel, PageHeader, Eyebrow, Pill, Ring, Reveal } from "@/components/app/primitives";
 import { Textarea } from "@/components/ui/textarea";
-import { TRIPS } from "@/lib/travel-data";
+import { useTrips } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import {
   Bot, Send, Paperclip, Mic, Sparkles, Plane, ArrowRight, FileText, BookOpen, Globe2,
@@ -94,7 +94,8 @@ function AssistantPage() {
     }, 1300 + Math.random() * 600);
   };
 
-  const trip = TRIPS[0];
+  const trips = useTrips();
+  const trip = trips[0]!
 
   return (
     <div className="space-y-8">

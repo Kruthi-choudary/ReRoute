@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Check, Clock, ExternalLink, Inbox } from "lucide-react";
 import { Panel, PageHeader, Eyebrow, Reveal, Pill } from "@/components/app/primitives";
-import { NOTIFICATIONS } from "@/lib/travel-data";
+import { useNotifications, type NotificationItem } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 type Kind = "alert" | "success" | "info" | "warning";
@@ -27,13 +27,14 @@ const GROUP_ORDER = ["Today", "Yesterday", "Earlier"] as const;
 const SPARK = [3, 5, 2, 6, 4, 8, 5, 7, 3, 6, 9, 4];
 
 function Notifications() {
+  const notifications = useNotifications();
   const [filter, setFilter] = useState("all");
   const [read, setRead] = useState<Record<string, boolean>>({});
   const [snoozed, setSnoozed] = useState<Record<string, boolean>>({});
 
   const unreadCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0, disruptions: 0, recovery: 0, documents: 0 };
-    for (const n of NOTIFICATIONS) {
+    for (const n of notifications) {
       if (read[n.id] || n.unread === false) continue;
       counts.all++;
       for (const f of FILTERS) if (f.id !== "all" && f.match(n.kind as Kind)) counts[f.id]++;
@@ -43,7 +44,7 @@ function Notifications() {
 
   const activeFilter = FILTERS.find((f) => f.id === filter)!;
 
-  const visible = NOTIFICATIONS.filter((n) => !snoozed[n.id] && activeFilter.match(n.kind as Kind));
+  const visible = notifications.filter((n) => !snoozed[n.id] && activeFilter.match(n.kind as Kind));
 
   const grouped = GROUP_ORDER.map((g) => ({
     group: g,

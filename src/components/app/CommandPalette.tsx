@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator,
 } from "@/components/ui/command";
-import { NAV_ITEMS, TRIPS } from "@/lib/travel-data";
+import { NAV_ITEMS } from "@/lib/travel-data";
+import { useTrips } from "@/lib/queries";
 
 export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: 
     return () => document.removeEventListener("keydown", onKey);
   }, [open, setOpen]);
 
+  const trips = useTrips();
   const go = (to: string) => {
     setOpen(false);
     navigate({ to });
@@ -38,7 +40,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: 
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Trips">
-          {TRIPS.map((t) => (
+          {trips.map((t) => (
             <CommandItem key={t.id} value={`${t.city} ${t.flight}`} onSelect={() => go(`/trips/${t.id}`)}>
               {t.city} · {t.flight}
               <span className="ml-auto text-xs text-muted-foreground">{t.date}</span>

@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { PageHeader, Eyebrow, Pill, Reveal, LiveDot } from "@/components/app/primitives";
-import { TRIPS, type Trip } from "@/lib/travel-data";
+import { type Trip } from "@/lib/travel-data";
+import { useTrips } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 function countdownLabel(hours: number) {
@@ -192,6 +193,7 @@ export const Route = createFileRoute("/_shell/trips/")({
 });
 
 function TripsPage() {
+  const trips = useTrips();
   const spans: ("tall" | "short")[] = ["tall", "short", "short", "tall"];
   return (
     <div className="space-y-10">
@@ -212,9 +214,9 @@ function TripsPage() {
         <motion.div
           className="flex cursor-grab gap-4 overflow-hidden active:cursor-grabbing"
           drag="x"
-          dragConstraints={{ left: -(TRIPS.length * 220), right: 0 }}
+          dragConstraints={{ left: -(trips.length * 220), right: 0 }}
         >
-          {TRIPS.map((t, i) => (
+          {trips.map((t, i) => (
             <motion.div
               key={t.id}
               className={cn("relative h-40 w-64 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br p-4 shadow-soft", t.hue)}
@@ -235,7 +237,7 @@ function TripsPage() {
       </section>
 
       <section className="columns-1 gap-6 md:columns-2">
-        {TRIPS.map((trip, i) => (
+        {trips.map((trip, i) => (
           <Reveal key={trip.id} delay={i * 0.06}>
             <TripCard trip={trip} index={i} span={spans[i % spans.length]} />
           </Reveal>
