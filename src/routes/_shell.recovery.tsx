@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
-import { CheckCircle2, CircleDashed, Loader2, Plane, DollarSign, Clock, Gauge, XCircle, Check } from "lucide-react";
-import { Panel, Eyebrow, PageHeader, CountUp, Pill, Reveal, LiveDot } from "@/components/app/primitives";
+import { useState, useEffect } from "react";
+import { CheckCircle2, CircleDashed, Loader2, Plane, DollarSign, Clock, Gauge, XCircle, Check, Zap, ShieldCheck, Activity } from "lucide-react";
+import { Panel, Eyebrow, PageHeader, CountUp, Pill, Reveal, LiveDot, Ring } from "@/components/app/primitives";
 import { RECOVERY_STEPS, type RecoveryStep } from "@/lib/travel-data";
-import { useRecovery, type ApiRecoveryPlan } from "@/lib/queries";
+import { useRecovery, useTrips, type ApiRecoveryPlan } from "@/lib/queries";
 import { useRecoverySocket } from "@/lib/useRecoverySocket";
 import { apiFetch } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,17 +90,23 @@ function mapPlanToSteps(plan: ApiRecoveryPlan): RecoveryStep[] {
 function mapPlanToCandidates(plan: ApiRecoveryPlan): Candidate[] {
   const flights = plan.selected_flight;
   if (!flights || flights.length === 0) return [];
-  const maxScore = Math.max(...flights.map((f) => f.score ?? 0));
-  return flights.map((f, i) => ({
-    id: f.flight_iata ?? String(i),
-    carrier: f.airline_name ?? f.airline_iata ?? "—",
-    flight: f.flight_iata ?? "—",
-    route: `${f.dep_iata ?? "—"} → ${f.arr_iata ?? "—"}`,
-    price: Math.round(f.price_est ?? 0),
-    duration: "—",
-    reliability: Math.round((f.score ?? 0) * 100),
-    chosen: (f.score ?? 0) === maxScore && i === 0,
-  }));
+  const maxScore = Math.max(...flights.map((f) => f.total_score ?? f.score ?? 0));
+  return flights.map((f, i) => {
+    const depDt = f.departure_datetime ? new Date(f.departure_datetime) : null;
+    const arrDt = f.arrival_datetime ? new Date(f.arrival_datetime) : null;
+    const mins = depDt && arrDt ? Math.round((arrDt.getTime() - depDt.getTime()) / 60_000) : null;
+    const score = f.total_score ?? f.score ?? 0;
+    return {
+      id: f.flight_number ?? f.flight_iata ?? String(i),
+      carrier: f.airline ?? f.airline_name ?? f.airline_iata ?? "—",
+      flight: f.flight_number ?? f.flight_iata ?? "—",
+      route: `${f.origin ?? f.dep_iata ?? "—"} → ${f.destination ?? f.arr_iata ?? "—"}`,
+      price: Math.round(f.total_price_usd ?? f.price_est ?? 0),
+      duration: mins ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "—",
+      reliability: f.on_time_percentage ?? Math.round(score * 100),
+      chosen: score === maxScore && i === 0,
+    };
+  });
 }
 
 function buildLogs(plan: ApiRecoveryPlan): { t: string; msg: string }[] {
@@ -114,18 +120,21 @@ function buildLogs(plan: ApiRecoveryPlan): { t: string; msg: string }[] {
 }
 
 function statusPill(status: string) {
+  if (status === "IDLE") return <Pill tone="muted">No active disruption</Pill>;
   if (status === "AWAITING_APPROVAL") return <Pill tone="warning"><LiveDot tone="warning" /> Awaiting your approval</Pill>;
-  if (status === "EXECUTING") return <Pill tone="warning"><LiveDot tone="warning" /> Recovery in progress</Pill>;
+  if (status === "EXECUTING" || status === "APPROVAL_EXECUTING") return <Pill tone="warning"><LiveDot tone="warning" /> Recovery in progress</Pill>;
   if (status === "COMPLETED") return <Pill tone="success"><LiveDot tone="success" /> Recovery complete</Pill>;
   if (status === "FAILED") return <Pill tone="muted">Recovery failed</Pill>;
-  if (status === "ANALYZING") return <Pill tone="primary"><LiveDot /> Analyzing</Pill>;
-  return <Pill tone="success"><LiveDot tone="success" /> Recovery in progress</Pill>;
+  if (status === "ANALYZING" || status === "PLAN_READY" || status === "POLICY_CHECK") return <Pill tone="primary"><LiveDot /> Analyzing disruption</Pill>;
+  return <Pill tone="primary"><LiveDot /> Working…</Pill>;
 }
 
 function RecoveryCenter() {
   const recovery = useRecovery();
+  const trips = useTrips();
   const queryClient = useQueryClient();
-  useRecoverySocket(recovery?.tripId);
+  const realTripId = recovery?.tripId ?? trips.find((t) => /^\d+$/.test(t.id))?.id;
+  useRecoverySocket(realTripId);
 
   const steps: RecoveryStep[] = recovery ? mapPlanToSteps(recovery.plan) : RECOVERY_STEPS;
   const candidates: Candidate[] = recovery
@@ -136,12 +145,24 @@ function RecoveryCenter() {
       )
     : (STATIC_CANDIDATES as Candidate[]);
   const logs = recovery ? buildLogs(recovery.plan) : STATIC_LOGS;
-  const planStatus = recovery?.plan.status ?? "EXECUTING";
+  const planStatus = recovery?.plan.status ?? "IDLE";
   const planId = recovery?.plan.id;
   const extraCost = recovery?.plan.total_extra_cost ?? 380;
+  const chosenFlight = candidates.find((c) => c.chosen);
+  const rebookAction = recovery?.plan.actions.find((a) => a.action_type === "REBOOK_FLIGHT" && a.status === "COMPLETED");
+  const bookingRef = (rebookAction?.result as { booking_reference?: string } | null)?.booking_reference
+    ?? (planId ? `RR-${planId}-NEW` : "—");
 
   const [selected, setSelected] = useState<RecoveryStep>(steps[0] ?? RECOVERY_STEPS[3]);
   const [acting, setActing] = useState<"approve" | "reject" | null>(null);
+
+  // Sync selected step when real steps load or change
+  useEffect(() => {
+    if (steps.length > 0) {
+      const running = steps.find((s) => s.state === "running");
+      setSelected(running ?? steps[0]);
+    }
+  }, [steps.length, recovery?.plan.status]);
 
   async function handleApprove() {
     if (!planId) return;
@@ -172,6 +193,179 @@ function RecoveryCenter() {
     } finally {
       setActing(null);
     }
+  }
+
+  if (planStatus === "IDLE") {
+    const idleTrip = trips.find((t) => /^\d+$/.test(t.id)) ?? trips[0];
+    const IDLE_PIPELINE = [
+      { id: "p1", label: "Disruption detected", detail: "Carrier feed · airport status · NOTAM" },
+      { id: "p2", label: "Impact analysis", detail: "Connections, hotel & transfer windows" },
+      { id: "p3", label: "Search alternatives", detail: "27+ carriers scored in real time" },
+      { id: "p4", label: "Policy check", detail: "Auto-approve vs. approval threshold" },
+      { id: "p5", label: "Execute & notify", detail: "Rebook, modify hotel, send boarding pass" },
+    ];
+
+    return (
+      <div className="space-y-6">
+        <Reveal>
+          <PageHeader
+            eyebrow="Recovery Center"
+            title="All systems nominal."
+            lede="Monitoring your trips in real time. When a disruption is detected the autonomous pipeline activates within seconds — zero manual work required."
+            actions={statusPill(planStatus)}
+          />
+        </Reveal>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <Reveal delay={0.05}>
+            <Panel className="flex items-center gap-5">
+              <Ring value={100} size={80} stroke={8} tone="success" label="100%" />
+              <div>
+                <Eyebrow>System health</Eyebrow>
+                <p className="mt-1 text-2xl font-semibold text-foreground">All clear</p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <LiveDot tone="success" /> Monitoring active
+                </p>
+              </div>
+            </Panel>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Panel>
+              <Eyebrow>Active disruptions</Eyebrow>
+              <p className="mt-3 text-4xl font-semibold tabular-nums text-foreground">
+                <CountUp to={0} />
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                All {trips.length} trip{trips.length !== 1 ? "s" : ""} healthy
+              </p>
+            </Panel>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <Panel>
+              <Eyebrow>Avg recovery time</Eyebrow>
+              <p className="mt-3 text-4xl font-semibold tabular-nums text-foreground">
+                <CountUp to={12} suffix="s" />
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">End-to-end pipeline</p>
+            </Panel>
+          </Reveal>
+        </div>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
+          {/* Left: pipeline preview */}
+          <Reveal delay={0.05}>
+            <Panel className="lg:sticky lg:top-24 lg:self-start">
+              <div className="flex items-center justify-between">
+                <Eyebrow>Autonomous recovery pipeline</Eyebrow>
+                <Pill tone="muted">Standby</Pill>
+              </div>
+              <div className="relative mt-6 pl-4">
+                <div className="absolute bottom-2 left-[27px] top-2 w-[2px] bg-border/40" />
+                <div className="space-y-1 opacity-55">
+                  {IDLE_PIPELINE.map((s, i) => (
+                    <div key={s.id} className="relative flex items-start gap-4 rounded-2xl px-3 py-3">
+                      <span className="relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card">
+                        <CircleDashed className="h-4 w-4 text-muted-foreground" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-foreground">{i + 1}. {s.label}</span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground">—</span>
+                        </span>
+                        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{s.detail}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-muted/40 px-4 py-3">
+                  <LiveDot tone="success" />
+                  <span className="text-xs text-muted-foreground">Pipeline on standby · ready to activate</span>
+                </div>
+              </div>
+            </Panel>
+          </Reveal>
+
+          {/* Right */}
+          <div className="space-y-6">
+            {/* Trip health card */}
+            {idleTrip && (
+              <Reveal delay={0.1}>
+                <Panel padded={false}>
+                  <div className={`relative overflow-hidden rounded-t-3xl bg-gradient-to-br ${idleTrip.hue} p-5 text-background`}>
+                    <div className="flex items-center justify-between">
+                      <Eyebrow className="text-background/70">Active trip</Eyebrow>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-background backdrop-blur">
+                        <ShieldCheck className="h-3 w-3" /> Healthy
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-2xl font-semibold tracking-tight">{idleTrip.from}</p>
+                        <p className="text-[11px] text-background/70">{idleTrip.depart}</p>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <Plane className="h-4 w-4 rotate-90 text-background/50" />
+                        <p className="text-[10px] text-background/50">{idleTrip.flight}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-semibold tracking-tight">{idleTrip.to}</p>
+                        <p className="text-[11px] text-background/70">{idleTrip.arrive}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{idleTrip.city}</p>
+                        <p className="text-xs text-muted-foreground">{idleTrip.carrier} · {idleTrip.date}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Activity className="h-3.5 w-3.5" />
+                        T−{Math.round(idleTrip.countdownHours)}h
+                      </div>
+                    </div>
+                  </div>
+                </Panel>
+              </Reveal>
+            )}
+
+            {/* Demo launcher */}
+            <Reveal delay={0.15}>
+              <Panel>
+                <Eyebrow>Demo controls</Eyebrow>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Inject a simulated 165-minute delay to watch the full recovery pipeline run live — policy check and approval flow included.
+                </p>
+                <div className="mt-5 space-y-3">
+                  <div className="rounded-2xl border border-border/40 bg-muted/60 p-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Step 1 · Reset (before each demo)
+                    </p>
+                    <code className="block break-all text-[11px] text-foreground/80">
+                      curl -X POST &quot;http://127.0.0.1:8000/api/demo/reset?user_id=3&quot;
+                    </code>
+                  </div>
+                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/70">
+                      Step 2 · Inject disruption
+                    </p>
+                    <code className="block break-all text-[11px] text-foreground/80">
+                      curl -X POST &quot;http://127.0.0.1:8000/api/demo/disruption?trip_id=4&amp;delay_minutes=165&quot;
+                    </code>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-start gap-3 rounded-2xl bg-muted/40 p-3 text-[11px] text-muted-foreground">
+                  <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--warning)]" />
+                  Pipeline takes ~12 seconds · watch for the &ldquo;Awaiting approval&rdquo; banner then click Approve
+                </div>
+              </Panel>
+            </Reveal>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -286,8 +480,27 @@ function RecoveryCenter() {
             >
               <Panel>
                 <Eyebrow>Decision engine · {selected.label}</Eyebrow>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                  {candidates.length > 0
+
+                {/* Booked flight confirmation */}
+                {planStatus === "COMPLETED" && chosenFlight && (
+                  <div className="mt-3 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/8 px-4 py-3">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {chosenFlight.flight} booked · {chosenFlight.route}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {chosenFlight.duration !== "—" ? `${chosenFlight.duration} · ` : ""}Ref: {bookingRef}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-primary">+${Math.round(extraCost)}</span>
+                  </div>
+                )}
+
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">
+                  {planStatus === "COMPLETED" && chosenFlight
+                    ? `Booked: ${chosenFlight.flight} · ${chosenFlight.route}`
+                    : candidates.length > 0
                     ? `AI compared ${candidates.length} flight${candidates.length !== 1 ? "s" : ""}`
                     : "AI compared 27 flights"}
                 </h2>

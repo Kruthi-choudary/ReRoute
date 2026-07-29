@@ -79,7 +79,7 @@ function mapTripStatus(apiStatus: string, hours: number): Trip["status"] {
 }
 
 function mapApiTrip(t: ApiTrip, i: number): Trip {
-  const segs = [...t.flights].sort((a, b) => a.sequence_order - b.sequence_order);
+  const segs = [...(t.flights ?? [])].sort((a, b) => a.sequence_order - b.sequence_order);
   const first = segs[0];
   const last = segs[segs.length - 1] ?? first;
   const destCode = last?.destination_airport ?? t.destination;
@@ -151,10 +151,25 @@ interface ApiRecoveryAction {
   action_type: string;
   status: string;
   details: Record<string, unknown> | null;
+  result: Record<string, unknown> | null;
   executed_at: string | null;
 }
 
 interface ApiAlternative {
+  // backend field names (from scoring/amadeus services)
+  flight_number?: string;
+  airline?: string;
+  origin?: string;
+  destination?: string;
+  total_price_usd?: number;
+  extra_cost_usd?: number;
+  total_score?: number;
+  on_time_percentage?: number;
+  stops?: number;
+  departure_datetime?: string;
+  arrival_datetime?: string;
+  cabin_class?: string;
+  // legacy / airlabs field names kept for fallback
   flight_iata?: string;
   airline_name?: string;
   airline_iata?: string;
@@ -202,7 +217,10 @@ export function useTrips(): Trip[] {
 
 export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null {
   const trips = useTrips();
-  const activeTripId = trips.find((t) => t.status === "Rerouted")?.id;
+  // Show recovery for any trip that is actively recovering OR was recently recovered
+  const activeTripId = trips.find(
+    (t) => t.status === "Rerouted" || /^\d+$/.test(t.id)
+  )?.id;
   const isRealId = !!activeTripId && /^\d+$/.test(activeTripId);
 
   const { data } = useQuery<ApiRecoveryPlan | null>({
@@ -213,7 +231,9 @@ export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null 
       return res.json() as Promise<ApiRecoveryPlan>;
     },
     enabled: isRealId,
-    staleTime: 5_000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       // WebSocket handles real-time; this is a fallback if the connection drops

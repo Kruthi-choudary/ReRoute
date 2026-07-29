@@ -53,6 +53,11 @@ export function useRecoverySocket(tripId: string | null | undefined) {
           void qc.invalidateQueries({ queryKey: ["trips"] });
         }
 
+        if (event === "TRIP_RESET") {
+          void qc.invalidateQueries({ queryKey: ["recovery"] });
+          void qc.invalidateQueries({ queryKey: ["trips"] });
+        }
+
         if (event === "AWAITING_APPROVAL") {
           toast.info("Recovery plan ready — your approval is needed.", {
             duration: 10_000,

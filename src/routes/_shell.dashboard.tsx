@@ -43,8 +43,8 @@ function Dashboard() {
   const trips = useTrips();
   const notifications = useNotifications();
   const trip = trips[0]!;
-  const reroutedTrip = trips.find((t) => t.status === "Rerouted");
-  useRecoverySocket(reroutedTrip?.id ?? null);
+  const realTrip = trips.find((t) => /^\d+$/.test(t.id));
+  useRecoverySocket(realTrip?.id ?? null);
 
   return (
     <div className="space-y-6">
