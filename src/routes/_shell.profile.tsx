@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Panel, PageHeader, Eyebrow, Pill, Ring, CountUp, Reveal } from "@/components/app/primitives";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useTrips } from "@/lib/queries";
 import {
-  Award, Leaf, Globe2, Plane, Star, Zap, Shield, Crown, MapPin, Gem,
+  Award, Leaf, Globe2, Plane, Star, Zap, Shield, Crown, MapPin, Gem, LogOut,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_shell/profile")({
@@ -56,15 +57,37 @@ function initials(name: string) {
 }
 
 function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const trips = useTrips();
   const displayName = user?.name ?? "Traveler";
   const displayInitials = user?.name ? initials(user.name) : "?";
+
+  // Derive stamps from real backend trip data; fall back to static STAMPS for demo
+  const realStamps = trips
+    .filter((t) => /^\d+$/.test(t.id))
+    .flatMap((t) => [
+      { code: t.from, date: t.date.toUpperCase() },
+      { code: t.to, date: t.date.toUpperCase() },
+    ])
+    .filter((s, i, arr) => arr.findIndex((x) => x.code === s.code) === i)
+    .slice(0, 8);
+  const stamps = realStamps.length > 0 ? realStamps : STAMPS;
   return (
     <div className="space-y-10">
       <PageHeader
         eyebrow="Travel identity"
         title="Profile"
         lede="Your ReRoute AI passport — a lifetime record of miles flown, disruptions recovered, and carbon saved."
+        actions={
+          <button
+            onClick={() => { signOut(); void navigate({ to: "/login", replace: true }); }}
+            className="flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-soft transition-colors hover:border-destructive/40 hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        }
       />
 
       {/* Passport spread */}
@@ -153,7 +176,7 @@ function ProfilePage() {
             <div className="mt-8">
               <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Passport stamps</p>
               <div className="flex flex-wrap gap-3">
-                {STAMPS.map((s, i) => (
+                {stamps.map((s, i) => (
                   <motion.div
                     key={s.code}
                     initial={{ opacity: 0, scale: 0.7, rotate: -10 }}

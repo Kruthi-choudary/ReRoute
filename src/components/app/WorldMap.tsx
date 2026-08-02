@@ -28,7 +28,7 @@ export function WorldMap({
   };
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden rounded-3xl bg-[#f2f6fb]", className)}>
+    <div className={cn("relative h-full w-full overflow-hidden rounded-3xl bg-[#f2f6fb] dark:bg-[#0d1526]", className)}>
       <motion.svg
         viewBox="0 0 100 62"
         className="h-full w-full"
@@ -38,7 +38,7 @@ export function WorldMap({
       >
         <defs>
           <pattern id="wm-dots" width="0.9" height="0.9" patternUnits="userSpaceOnUse">
-            <circle cx="0.28" cy="0.28" r="0.14" fill="rgba(15,23,42,0.13)" />
+            <circle cx="0.28" cy="0.28" r="0.14" className="fill-[rgba(15,23,42,0.13)] dark:fill-[rgba(255,255,255,0.09)]" />
           </pattern>
           <linearGradient id="wm-active" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
@@ -49,7 +49,7 @@ export function WorldMap({
         {/* landmass silhouettes as dotted plates */}
         <g>
           {LANDMASSES.map((d, i) => (
-            <path key={i} d={d} fill="url(#wm-dots)" stroke="rgba(15,23,42,0.07)" strokeWidth="0.12" />
+            <path key={i} d={d} fill="url(#wm-dots)" className="stroke-[rgba(15,23,42,0.07)] dark:stroke-[rgba(255,255,255,0.05)]" strokeWidth="0.12" />
           ))}
         </g>
 
@@ -86,7 +86,7 @@ export function WorldMap({
               <motion.path
                 d={arc(r.from, r.to)}
                 fill="none"
-                stroke={active ? "url(#wm-active)" : rerouted ? "var(--accent)" : "rgba(15,23,42,0.18)"}
+                stroke={active ? "url(#wm-active)" : rerouted ? "var(--accent)" : "var(--border)"}
                 strokeWidth={active ? 0.42 : 0.26}
                 strokeDasharray={rerouted ? "1.2 1" : undefined}
                 strokeLinecap="round"

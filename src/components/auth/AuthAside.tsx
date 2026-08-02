@@ -53,12 +53,12 @@ function Cloud({ x, y, s, delay }: { x: number; y: number; s: number; delay: num
 export function AuthAside({ title, subtitle, badges }: AuthAsideProps = {}) {
   const items = badges ?? DEFAULT_BADGES;
   return (
-    <aside className="relative hidden overflow-hidden bg-[linear-gradient(160deg,#eaf1ff_0%,#f6f9ff_45%,#eef6ff_100%)] lg:flex lg:w-[55%]">
+    <aside className="relative hidden overflow-hidden bg-[linear-gradient(160deg,#eaf1ff_0%,#f6f9ff_45%,#eef6ff_100%)] dark:bg-[linear-gradient(160deg,#0d1526_0%,#111828_45%,#0e1c2e_100%)] lg:flex lg:w-[55%]">
       {/* map + sky layer */}
       <svg viewBox="0 0 100 80" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
         <defs>
           <pattern id="auth-dots" width="0.9" height="0.9" patternUnits="userSpaceOnUse">
-            <circle cx="0.28" cy="0.28" r="0.13" fill="rgba(15,23,42,0.12)" />
+            <circle cx="0.28" cy="0.28" r="0.13" className="fill-[rgba(15,23,42,0.12)] dark:fill-[rgba(255,255,255,0.09)]" />
           </pattern>
           <linearGradient id="auth-route" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.1" />
@@ -68,7 +68,7 @@ export function AuthAside({ title, subtitle, badges }: AuthAsideProps = {}) {
 
         <g transform="translate(0 6)">
           {LANDMASSES.map((d, i) => (
-            <path key={i} d={d} fill="url(#auth-dots)" stroke="rgba(15,23,42,0.06)" strokeWidth="0.12" />
+            <path key={i} d={d} fill="url(#auth-dots)" className="stroke-[rgba(15,23,42,0.06)] dark:stroke-[rgba(255,255,255,0.05)]" strokeWidth="0.12" />
           ))}
         </g>
 

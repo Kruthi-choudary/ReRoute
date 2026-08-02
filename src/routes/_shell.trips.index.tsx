@@ -20,6 +20,9 @@ function statusTone(status: Trip["status"]) {
     case "On time": return "success" as const;
     case "Rerouted": return "warning" as const;
     case "Boarding": return "primary" as const;
+    case "Delayed": return "danger" as const;
+    case "Action Required": return "danger" as const;
+    case "Recovered": return "success" as const;
     default: return "muted" as const;
   }
 }
@@ -115,6 +118,33 @@ function TripCard({ trip, index, span }: { trip: Trip; index: number; span: "tal
             </div>
           </div>
         </div>
+
+        {(trip.status === "Delayed" || trip.status === "Action Required" || trip.status === "Rerouted") && (
+          <div className={cn(
+            "flex items-center gap-2 px-5 py-2.5 text-xs font-semibold",
+            trip.status === "Action Required" ? "bg-[color-mix(in_oklab,var(--danger)_12%,transparent)] text-[var(--danger)]" :
+            trip.status === "Delayed" ? "bg-[color-mix(in_oklab,var(--warning)_12%,transparent)] text-[var(--warning)]" :
+            "bg-[color-mix(in_oklab,var(--warning)_10%,transparent)] text-[var(--warning)]"
+          )}>
+            <span className="relative flex h-2 w-2">
+              <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-60",
+                trip.status === "Action Required" ? "bg-[var(--danger)]" : "bg-[var(--warning)]"
+              )} />
+              <span className={cn("relative inline-flex h-2 w-2 rounded-full",
+                trip.status === "Action Required" ? "bg-[var(--danger)]" : "bg-[var(--warning)]"
+              )} />
+            </span>
+            {trip.status === "Action Required" ? "Action required — tap to review recovery plan" :
+             trip.status === "Delayed" ? "Flight delayed — recovery pipeline active" :
+             "Flight rerouted — view new itinerary"}
+          </div>
+        )}
+        {trip.status === "Recovered" && (
+          <div className="flex items-center gap-2 bg-[color-mix(in_oklab,var(--success)_10%,transparent)] px-5 py-2.5 text-xs font-semibold text-[var(--success)]">
+            <span className="h-2 w-2 rounded-full bg-[var(--success)]" />
+            Trip recovered — new itinerary confirmed
+          </div>
+        )}
 
         <AnimatePresence initial={false}>
           {open && (
@@ -224,6 +254,13 @@ function TripsPage() {
             >
               <Grain />
               <CitySilhouette seed={i + 1} />
+              {(t.status === "Delayed" || t.status === "Action Required") && (
+                <div className="absolute right-2 top-2">
+                  <span className="rounded-full bg-[var(--danger)]/80 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur">
+                    {t.status === "Action Required" ? "!" : "Delay"}
+                  </span>
+                </div>
+              )}
               <div className="relative flex h-full flex-col justify-between">
                 <p className="text-xs tracking-[0.2em] text-background/70">{t.code}</p>
                 <div>

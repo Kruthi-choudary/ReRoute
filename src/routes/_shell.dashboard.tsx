@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Plane,
@@ -33,10 +33,10 @@ export const Route = createFileRoute("/_shell/dashboard")({
 });
 
 const QUICK_ACTIONS = [
-  { icon: Search, label: "Find flight" },
-  { icon: Hotel, label: "Hold hotel" },
-  { icon: ShieldCheck, label: "File claim" },
-  { icon: CalendarClock, label: "Reschedule" },
+  { icon: Search, label: "Find flight", to: "/trips" as const },
+  { icon: Hotel, label: "Hold hotel", to: "/hotels" as const },
+  { icon: ShieldCheck, label: "File claim", to: "/recovery" as const },
+  { icon: CalendarClock, label: "Reschedule", to: "/recovery" as const },
 ];
 
 function Dashboard() {
@@ -57,7 +57,7 @@ function Dashboard() {
             </h1>
           </div>
           <Pill tone="success">
-            <LiveDot tone="success" /> Autonomous mode active
+            <LiveDot tone="success" /> All trips protected
           </Pill>
         </div>
       </Reveal>
@@ -81,31 +81,29 @@ function Dashboard() {
           </Panel>
         </Reveal>
 
-        {/* AI status rail */}
+        {/* Trip protection rail */}
         <Reveal delay={0.1} className="col-span-12 lg:col-span-4">
           <Panel className="flex h-[440px] flex-col">
             <div className="flex items-center justify-between">
-              <Eyebrow>AI status</Eyebrow>
+              <Eyebrow>Trip protection</Eyebrow>
               <LiveDot tone="success" />
             </div>
             <div className="mt-6 flex flex-1 flex-col items-center justify-center gap-4">
-              <Ring value={96} size={140} stroke={12} label="96%" sub="confidence" />
+              <Ring value={100} size={140} stroke={12} tone="success" label="100%" sub="protected" />
               <p className="text-center text-sm text-muted-foreground">
-                Recovery agent is negotiating fares and holding downstream bookings.
+                All your trips are monitored in real time. Disruptions trigger automatic recovery — no action needed.
               </p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-muted/50 p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Latency</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Trips tracked</p>
                 <p className="mt-1 text-xl font-semibold text-foreground">
-                  <CountUp to={182} suffix="ms" />
+                  <CountUp to={trips.length || 1} />
                 </p>
               </div>
               <div className="rounded-2xl bg-muted/50 p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Decisions/hr</p>
-                <p className="mt-1 text-xl font-semibold text-foreground">
-                  <CountUp to={1240} />
-                </p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Auto-recovery</p>
+                <p className="mt-1 text-xl font-semibold text-foreground">On</p>
               </div>
             </div>
           </Panel>
@@ -167,15 +165,14 @@ function Dashboard() {
             <Eyebrow>Quick actions</Eyebrow>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {QUICK_ACTIONS.map((a) => (
-                <motion.button
+                <Link
                   key={a.label}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="group relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-muted/40 p-4 transition-colors hover:bg-primary/10"
+                  to={a.to}
+                  className="group relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-muted/40 p-4 transition-all hover:bg-primary/10 hover:-translate-y-0.5 hover:shadow-soft active:scale-95"
                 >
                   <a.icon className="h-5 w-5 text-primary" />
                   <span className="text-[11px] font-medium text-foreground">{a.label}</span>
-                </motion.button>
+                </Link>
               ))}
             </div>
           </Panel>
@@ -230,7 +227,7 @@ function Dashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] text-muted-foreground">T-{t.countdownHours}h</span>
-                    <Pill tone={t.status === "Rerouted" ? "warning" : t.status === "Boarding" ? "primary" : "muted"}>
+                    <Pill tone={t.status === "Rerouted" ? "warning" : t.status === "Boarding" ? "primary" : (t.status === "Delayed" || t.status === "Action Required") ? "danger" : t.status === "Recovered" ? "success" : "muted"}>
                       {t.status}
                     </Pill>
                   </div>

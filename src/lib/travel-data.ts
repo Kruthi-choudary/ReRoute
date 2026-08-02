@@ -86,7 +86,7 @@ export type Trip = {
   tempC: number;
   weather: string;
   hue: string;
-  status: "On time" | "Rerouted" | "Boarding" | "Scheduled";
+  status: "On time" | "Rerouted" | "Boarding" | "Scheduled" | "Delayed" | "Recovered" | "Action Required";
 };
 
 export const TRIPS: Trip[] = [

@@ -65,6 +65,33 @@
   --ring: oklch(0.556 0.199 262);
 }
 
+.dark {
+  --background: oklch(0.115 0.018 265);
+  --foreground: oklch(0.93 0.01 255);
+  --card: oklch(0.155 0.022 265);
+  --card-foreground: oklch(0.93 0.01 255);
+  --popover: oklch(0.155 0.022 265);
+  --popover-foreground: oklch(0.93 0.01 255);
+  --primary: oklch(0.62 0.2 262);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.35 0.03 255);
+  --secondary-foreground: oklch(0.93 0.01 255);
+  --muted: oklch(0.21 0.022 265);
+  --muted-foreground: oklch(0.58 0.03 255);
+  --accent: oklch(0.72 0.12 190);
+  --accent-foreground: oklch(0.99 0 0);
+  --success: oklch(0.68 0.17 145);
+  --warning: oklch(0.80 0.15 75);
+  --danger: oklch(0.65 0.22 27);
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.27 0.025 265);
+  --input: oklch(0.27 0.025 265);
+  --ring: oklch(0.62 0.2 262);
+  --shadow-soft: 0 1px 3px rgba(0,0,20,0.35), 0 8px 24px -12px rgba(0,0,20,0.5);
+  --shadow-float: 0 4px 16px rgba(0,0,20,0.4), 0 24px 48px -20px rgba(0,0,20,0.6);
+}
+
 @layer base {
   html, body { overflow-x: clip; }
   * { border-color: var(--color-border); }
