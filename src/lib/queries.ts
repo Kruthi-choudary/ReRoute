@@ -72,7 +72,11 @@ function countdownHrs(iso: string): number {
 }
 
 function mapTripStatus(apiStatus: string, hours: number): Trip["status"] {
-  if (apiStatus === "DISRUPTED" || apiStatus === "RECOVERING") return "Rerouted";
+  if (apiStatus === "DISRUPTED") return "Delayed";
+  if (apiStatus === "AT_RISK") return "Action Required";
+  if (apiStatus === "ESCALATED") return "Action Required";
+  if (apiStatus === "RECOVERING") return "Rerouted";
+  if (apiStatus === "RECOVERED") return "Recovered";
   if (hours < 3) return "Boarding";
   if (hours < 48) return "On time";
   return "Scheduled";
@@ -204,7 +208,7 @@ export function useTrips(): Trip[] {
   const { data } = useQuery<ApiTrip[]>({
     queryKey: ["trips", user?.id],
     queryFn: async () => {
-      const res = await apiFetch(`/api/trips/?user_id=${user!.id}`);
+      const res = await apiFetch(`/api/trips/`);
       if (!res.ok) return [];
       return res.json() as Promise<ApiTrip[]>;
     },
@@ -280,12 +284,45 @@ export function usePolicy(): PolicyData | null {
   };
 }
 
+// ── Hotel Reservations ────────────────────────────────────────────────────
+
+export interface HotelReservationItem {
+  id: number;
+  trip_id: number;
+  property_name: string;
+  city: string;
+  hotel_email: string | null;
+  check_in_date: string;
+  check_out_date: string;
+  original_check_in_date: string | null;
+  original_check_out_date: string | null;
+  booking_reference: string | null;
+  status: string;
+  notification_status: "PENDING" | "NOTIFIED" | "FAILED";
+  notified_at: string | null;
+}
+
+export function useHotelReservations(): HotelReservationItem[] {
+  const { user } = useAuth();
+  const { data } = useQuery<HotelReservationItem[]>({
+    queryKey: ["hotel-reservations", user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/hotels/`);
+      if (!res.ok) return [];
+      return res.json() as Promise<HotelReservationItem[]>;
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  return data ?? [];
+}
+
 export function useNotifications(): NotificationItem[] {
   const { user } = useAuth();
   const { data } = useQuery<ApiNotification[]>({
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
-      const res = await apiFetch(`/api/notifications/${user!.id}`);
+      const res = await apiFetch(`/api/notifications/`);
       if (!res.ok) return [];
       return res.json() as Promise<ApiNotification[]>;
     },

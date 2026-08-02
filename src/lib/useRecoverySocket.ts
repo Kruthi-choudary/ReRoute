@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
 const WS_BASE = BASE.replace(/^https/, "wss").replace(/^http/, "ws");
+const TOKEN_KEY = "reroute_token";
 
 const RECOVERY_EVENTS = new Set([
   "RECOVERY_STARTED",
@@ -32,7 +33,8 @@ export function useRecoverySocket(tripId: string | null | undefined) {
     function connect() {
       if (!activeRef.current) return;
 
-      const ws = new WebSocket(`${WS_BASE}/ws/${tripId}`);
+      const token = localStorage.getItem(TOKEN_KEY) ?? "";
+      const ws = new WebSocket(`${WS_BASE}/ws/${tripId}?token=${encodeURIComponent(token)}`);
       wsRef.current = ws;
 
       ws.onmessage = (e) => {
@@ -56,6 +58,15 @@ export function useRecoverySocket(tripId: string | null | undefined) {
         if (event === "TRIP_RESET") {
           void qc.invalidateQueries({ queryKey: ["recovery"] });
           void qc.invalidateQueries({ queryKey: ["trips"] });
+          void qc.invalidateQueries({ queryKey: ["hotel-reservations"] });
+        }
+
+        if (event === "ACTION_COMPLETED" && (payload as { type?: string }).type === "MODIFY_HOTEL") {
+          void qc.invalidateQueries({ queryKey: ["hotel-reservations"] });
+        }
+
+        if (event === "TRIP_RECOVERED") {
+          void qc.invalidateQueries({ queryKey: ["hotel-reservations"] });
         }
 
         if (event === "AWAITING_APPROVAL") {

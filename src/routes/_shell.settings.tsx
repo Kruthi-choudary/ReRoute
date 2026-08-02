@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/lib/useTheme";
 import { motion } from "framer-motion";
 import { Panel, PageHeader, Eyebrow, Pill, Reveal } from "@/components/app/primitives";
 import { Switch } from "@/components/ui/switch";
@@ -101,7 +102,7 @@ function SettingsPage() {
   const [seat, setSeat] = useState("Window");
   const [cabin, setCabin] = useState("Business");
   const [threshold, setThreshold] = useState([650]);
-  const [dark, setDark] = useState(false);
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [rules, setRules] = useState(RULES);
   const [active, setActive] = useState("travel");
   const [saving, setSaving] = useState(false);
@@ -192,11 +193,11 @@ function SettingsPage() {
                     {saving ? "Saving…" : "Save"}
                   </button>
                 </div>
-                <Row title="Preferred seat" desc="Used when rebooking automatically." control={<Segmented options={["Window", "Aisle", "Middle"]} value={seat} onChange={setSeat} />} />
-                <Row title="Preferred cabin" desc="ReRoute will try to match or upgrade." control={<Segmented options={["Economy", "Premium", "Business"]} value={cabin} onChange={setCabin} />} />
-                <Row title="Preferred airline alliance" desc="Star Alliance, oneworld, SkyTeam" control={<Pill tone="primary">Star Alliance</Pill>} />
-                <Row title="Extra legroom priority" desc="Prefer exit row / bulkhead when available" control={<Switch defaultChecked />} />
-                <Row title="Allow overnight layovers" desc="If it saves recovery time by 3+ hours" control={<Switch />} />
+                <Row title="Preferred seat" desc="Saved · seat request submitted at booking time." control={<Segmented options={["Window", "Aisle", "Middle"]} value={seat} onChange={setSeat} />} />
+                <Row title="Preferred cabin" desc="Saved · used to filter alternative flights." control={<Segmented options={["Economy", "Premium", "Business"]} value={cabin} onChange={setCabin} />} />
+                <Row title="Preferred airline alliance" desc="Star Alliance, oneworld, SkyTeam" control={<Pill tone="muted">Star Alliance · coming soon</Pill>} />
+                <Row title="Extra legroom priority" desc="Preference saved · not yet applied to automated rebooking." control={<Switch defaultChecked />} />
+                <Row title="Allow overnight layovers" desc="Preference saved · not yet applied to automated rebooking." control={<Switch />} />
               </Panel>
             </Reveal>
           </div>
@@ -229,8 +230,12 @@ function SettingsPage() {
           <div id="payment" ref={(el) => { refs.current.payment = el; }}>
             <Reveal>
               <Panel>
-                <Eyebrow className="mb-1">Payment</Eyebrow>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Methods for rebooking & fees</h2>
+                <div className="flex items-center gap-2">
+                  <Eyebrow className="mb-1">Payment</Eyebrow>
+                  <Pill tone="muted" className="mb-1 text-[10px]">Demo</Pill>
+                </div>
+                <h2 className="mb-2 text-lg font-semibold text-foreground">Methods for rebooking & fees</h2>
+                <p className="mb-4 text-xs text-muted-foreground">In production, ReRoute AI uses Stripe to securely charge the default card only when a recovery action exceeds your auto-approval threshold.</p>
                 <div className="flex flex-wrap gap-4">
                   {CARDS.map((c) => (
                     <motion.div key={c.last4} whileHover={{ y: -4, rotate: -1 }} className={cn("relative h-28 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-background shadow-soft", c.hue)}>
@@ -239,7 +244,10 @@ function SettingsPage() {
                       <p className="mt-1 text-xs opacity-80">{c.name}</p>
                     </motion.div>
                   ))}
-                  <button className="flex h-28 w-44 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary">
+                  <button
+                    onClick={() => toast.info("Payment methods are simulated in this demo. In production, cards are added securely via Stripe.")}
+                    className="flex h-28 w-44 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary"
+                  >
                     <Plus className="h-5 w-5" />
                     <span className="text-xs font-medium">Add method</span>
                   </button>
@@ -252,15 +260,22 @@ function SettingsPage() {
           <div id="emergency" ref={(el) => { refs.current.emergency = el; }}>
             <Reveal>
               <Panel>
-                <Eyebrow className="mb-1">Emergency</Eyebrow>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Contacts notified on major disruption</h2>
+                <div className="flex items-center gap-2">
+                  <Eyebrow className="mb-1">Emergency</Eyebrow>
+                  <Pill tone="muted" className="mb-1 text-[10px]">Demo</Pill>
+                </div>
+                <h2 className="mb-2 text-lg font-semibold text-foreground">Contacts notified on major disruption</h2>
+                <p className="mb-4 text-xs text-muted-foreground">In production, these contacts receive a push notification and SMS within 60 seconds of a confirmed disruption.</p>
                 {[
                   { name: "Travel Companion", rel: "Companion", phone: "+1 (415) 555-0142" },
                   { name: "Travel Assistant", rel: "Assistant", phone: "+1 (628) 555-0193" },
                 ].map((c) => (
                   <Row key={c.name} title={c.name} desc={`${c.rel} · ${c.phone}`} control={<Switch defaultChecked />} />
                 ))}
-                <button className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
+                <button
+                  onClick={() => toast.info("Demo mode — emergency contacts can't be added here. In production, contacts are stored securely and notified via SMS and push.")}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary"
+                >
                   <Plus className="h-3.5 w-3.5" /> Add contact
                 </button>
               </Panel>
@@ -339,25 +354,25 @@ function SettingsPage() {
                 <div className="flex items-center justify-between gap-6">
                   <div>
                     <p className="text-sm font-medium text-foreground">Dark mode</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Visual preview only — interface stays in light mode.</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Switches the entire interface to dark mode.</p>
                   </div>
-                  <Switch checked={dark} onCheckedChange={setDark} />
+                  <Switch checked={isDark} onCheckedChange={() => toggleTheme()} />
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-4">
-                  <div className={cn("rounded-2xl border border-border/60 p-4 transition-all", !dark && "ring-2 ring-primary")}>
+                  <button onClick={() => { if (isDark) toggleTheme(); }} className={cn("rounded-2xl border border-border/60 p-4 text-left transition-all hover:border-primary/60", !isDark && "ring-2 ring-primary")}>
                     <div className="mb-3 h-16 rounded-lg bg-gradient-to-br from-white to-slate-100 shadow-inner" />
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-foreground">Light</span>
-                      {!dark && <Check className="h-3.5 w-3.5 text-primary" />}
+                      {!isDark && <Check className="h-3.5 w-3.5 text-primary" />}
                     </div>
-                  </div>
-                  <div className={cn("rounded-2xl border border-border/60 p-4 transition-all", dark && "ring-2 ring-primary")}>
+                  </button>
+                  <button onClick={() => { if (!isDark) toggleTheme(); }} className={cn("rounded-2xl border border-border/60 p-4 text-left transition-all hover:border-primary/60", isDark && "ring-2 ring-primary")}>
                     <div className="mb-3 h-16 rounded-lg bg-gradient-to-br from-[#1c1c22] to-[#0a0a0d] shadow-inner" />
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-foreground">Dark</span>
-                      {dark && <Check className="h-3.5 w-3.5 text-primary" />}
+                      {isDark && <Check className="h-3.5 w-3.5 text-primary" />}
                     </div>
-                  </div>
+                  </button>
                 </div>
               </Panel>
             </Reveal>

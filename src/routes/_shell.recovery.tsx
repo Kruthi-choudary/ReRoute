@@ -78,10 +78,19 @@ function mapPlanToSteps(plan: ApiRecoveryPlan): RecoveryStep[] {
       a.action_type === "REBOOK_FLIGHT"
         ? "Searching and rebooking replacement flight"
         : a.action_type === "MODIFY_HOTEL"
-        ? "Adjusting hotel check-in to match new arrival"
+        ? (() => {
+            const r = a.result as { hotel_notified?: boolean; booking_reference?: string; channel?: string } | null;
+            if (r?.hotel_notified) {
+              return `Hotel notified${r.channel === "email_simulated" ? " (simulated email)" : ""} · Ref ${r.booking_reference ?? "—"}`;
+            }
+            return "Adjusting hotel check-in to match new arrival";
+          })()
         : a.action_type === "RESCHEDULE_TRANSFER"
         ? "Rescheduling ground transfer"
-        : "Sending update notification",
+        : (() => {
+            const r = a.result as { sent?: boolean } | null;
+            return r?.sent ? "Passenger notified · In-app" : "Sending update notification";
+          })(),
     duration: a.executed_at ? new Date(a.executed_at).toLocaleTimeString() : "—",
     state: mapActionState(a.status),
   }));
@@ -114,7 +123,15 @@ function buildLogs(plan: ApiRecoveryPlan): { t: string; msg: string }[] {
   if (plan.reasoning) logs.push({ t: "—", msg: plan.reasoning });
   plan.actions.forEach((a) => {
     const time = a.executed_at ? new Date(a.executed_at).toLocaleTimeString() : "—";
-    logs.push({ t: time, msg: `${fmtActionLabel(a.action_type)} · ${a.status.toLowerCase()}` });
+    if (a.action_type === "MODIFY_HOTEL") {
+      const r = a.result as { hotel_notified?: boolean; booking_reference?: string; status?: string } | null;
+      const detail = r?.hotel_notified
+        ? `Hotel notified · ${r.status ?? "late arrival notice sent"}`
+        : `${fmtActionLabel(a.action_type)} · ${a.status.toLowerCase()}`;
+      logs.push({ t: time, msg: detail });
+    } else {
+      logs.push({ t: time, msg: `${fmtActionLabel(a.action_type)} · ${a.status.toLowerCase()}` });
+    }
   });
   return logs.length > 0 ? logs : STATIC_LOGS;
 }
