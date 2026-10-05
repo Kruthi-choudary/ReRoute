@@ -31,6 +31,16 @@ export function useTheme() {
   return { theme, setTheme, toggle, isDark: theme === "dark" };
 }
 
+export function useForceLightMode() {
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+    return () => {
+      const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+      if (stored === "dark") document.documentElement.classList.add("dark");
+    };
+  }, []);
+}
+
 export function initTheme() {
   if (typeof document === "undefined") return;
   const stored = localStorage.getItem(THEME_KEY) as Theme | null;

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useForceLightMode } from "@/lib/useTheme";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion, useScroll, useTransform, useMotionValue, useMotionValueEvent,
@@ -32,7 +33,12 @@ function Nav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  const links = ["Features", "Solutions", "Enterprise", "Pricing", "Support"];
+  const links = [
+    { label: "How it works", href: "#how" },
+    { label: "Live demo",    href: "#solutions" },
+    { label: "FAQ",          href: "#pricing" },
+    { label: "Get started",  href: "#cta" },
+  ];
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
@@ -48,7 +54,7 @@ function Nav() {
         </a>
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
-            <a key={l} href={`#${l.toLowerCase()}`} className="text-sm text-secondary transition hover:text-foreground">{l}</a>
+            <a key={l.label} href={l.href} className="text-sm text-secondary transition hover:text-foreground">{l.label}</a>
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
@@ -65,7 +71,7 @@ function Nav() {
         {open && (
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden bg-white/95 backdrop-blur-xl md:hidden">
             <div className="flex flex-col gap-4 px-6 py-6">
-              {links.map((l) => <a key={l} href={`#${l.toLowerCase()}`} className="text-sm">{l}</a>)}
+              {links.map((l) => <a key={l.label} href={l.href} className="text-sm">{l.label}</a>)}
               <Link to="/signup" className="inline-flex w-fit items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm text-background">Get Started</Link>
             </div>
           </motion.div>
@@ -898,44 +904,18 @@ function CTA() {
 
 /* ------------------------- FOOTER ------------------------- */
 function Footer() {
-  const cols = [
-    { t: "Product",   l: ["Features", "Solutions", "Enterprise", "Pricing", "Changelog"] },
-    { t: "Company",   l: ["About", "Careers", "Newsroom", "Contact"] },
-    { t: "Resources", l: ["Docs", "API", "Status", "Support"] },
-    { t: "Legal",     l: ["Privacy", "Terms", "Security", "DPA"] },
-  ];
   return (
     <footer className="border-t border-border bg-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-[1.4fr_repeat(4,1fr)]">
-        <div>
-          <div className="flex items-center gap-2">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <p className="w-full text-center text-xs italic text-secondary/50 tracking-wide">"Built for the traveller who can't afford a missed connection, a stranded layover, or a silent airline — ReRoute AI moves before you have to."</p>
+        <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
+          <div className="flex items-center gap-2.5">
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Plane className="h-4 w-4 -rotate-45" />
             </span>
             <span className="text-[15px] font-semibold">ReRoute<span className="text-primary">.ai</span></span>
           </div>
-          <p className="mt-4 max-w-xs text-sm text-secondary">
-            The autonomous travel concierge for people, teams and enterprises who can&rsquo;t afford to stop moving.
-          </p>
-          <div className="mt-6 flex items-center gap-3 text-secondary">
-            {["LinkedIn", "GitHub", "Twitter"].map((s) => (
-              <a key={s} href="#" className="rounded-full border border-border px-3 py-1 text-xs transition hover:text-foreground">{s}</a>
-            ))}
-          </div>
-        </div>
-        {cols.map((c) => (
-          <div key={c.t}>
-            <div className="text-xs font-semibold uppercase tracking-widest text-secondary">{c.t}</div>
-            <ul className="mt-4 space-y-2.5 text-sm">
-              {c.l.map((x) => <li key={x}><a href="#" className="text-foreground/80 transition hover:text-foreground">{x}</a></li>)}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-xs text-secondary">
-          <span>© {new Date().getFullYear()} ReRoute AI, Inc. All rights reserved.</span>
-          <span className="inline-flex items-center gap-2"><Lock className="h-3 w-3" /> SOC 2 Type II · ISO 27001 · GDPR</span>
+          <span className="text-xs text-secondary">© {new Date().getFullYear()} ReRoute AI</span>
         </div>
       </div>
     </footer>
@@ -960,6 +940,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 /* ------------------------- PAGE ------------------------- */
 function Landing() {
+  useForceLightMode();
   return (
     <div className="relative">
       <Nav />

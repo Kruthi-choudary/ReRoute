@@ -76,7 +76,7 @@ function mapPlanToSteps(plan: ApiRecoveryPlan): RecoveryStep[] {
     label: fmtActionLabel(a.action_type),
     detail:
       a.action_type === "REBOOK_FLIGHT"
-        ? "Searching and rebooking replacement flight"
+        ? "Searched and rebooked a replacement flight"
         : a.action_type === "MODIFY_HOTEL"
         ? (() => {
             const r = a.result as { hotel_notified?: boolean; booking_reference?: string; channel?: string } | null;

@@ -154,7 +154,7 @@ function ReservationCard({
       <div className="relative flex h-full flex-col justify-between p-5">
         {/* Top row */}
         <div className="flex items-start justify-between">
-          <Eyebrow className="text-background/70">{reservation.city}</Eyebrow>
+          <Eyebrow className="text-white/70">{reservation.city}</Eyebrow>
           <div className="flex flex-col items-end gap-1">
             {isUpdated && (
               <span className="flex items-center gap-1 rounded-full bg-[var(--warning)]/20 px-2.5 py-0.5 text-[10px] font-semibold text-[var(--warning)] backdrop-blur">
@@ -171,8 +171,8 @@ function ReservationCard({
 
         {/* Hotel name */}
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight text-background">{reservation.property_name}</h3>
-          <p className="mt-1 text-[11px] text-background/60">{reservation.booking_reference}</p>
+          <h3 className="text-2xl font-semibold tracking-tight text-white/90">{reservation.property_name}</h3>
+          <p className="mt-1 text-[11px] text-white/60">{reservation.booking_reference}</p>
         </div>
       </div>
 
@@ -268,19 +268,20 @@ function HotelsPage() {
         </Reveal>
       )}
 
-      {/* Masonry grid */}
-      <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
-        <Reveal className="mb-6 break-inside-avoid">
-          <div className="h-[380px] overflow-hidden rounded-3xl border border-border/60 shadow-soft">
-            <WorldMap compact className="h-full" />
-          </div>
-        </Reveal>
+      {/* Full-width map */}
+      <Reveal>
+        <div className="h-[380px] overflow-hidden rounded-3xl border border-border/60 shadow-soft">
+          <WorldMap compact className="h-full" />
+        </div>
+      </Reveal>
 
+      {/* Hotel cards grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {reservations.length === 0 ? (
           <EmptyState />
         ) : (
           reservations.map((r, i) => (
-            <Reveal key={r.id} delay={i * 0.05} className="break-inside-avoid">
+            <Reveal key={r.id} delay={i * 0.05}>
               <ReservationCard reservation={r} index={i} onSelect={setSelected} />
             </Reveal>
           ))
@@ -316,8 +317,8 @@ function HotelsPage() {
                   ✕
                 </button>
                 <div className="absolute bottom-4 left-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-background/60">{selected.city}</p>
-                  <p className="text-xl font-semibold text-background">{selected.property_name}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{selected.city}</p>
+                  <p className="text-xl font-semibold text-white/90">{selected.property_name}</p>
                 </div>
               </div>
 

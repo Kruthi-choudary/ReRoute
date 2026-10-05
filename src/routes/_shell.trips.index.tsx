@@ -64,7 +64,7 @@ function QRMatrix({ seed }: { seed: number }) {
 
 function RouteStrip({ from, to }: { from: string; to: string }) {
   return (
-    <div className="relative flex items-center gap-2 text-background/90">
+    <div className="relative flex items-center gap-2 text-white/90">
       <span className="text-sm font-semibold tracking-tight">{from}</span>
       <div className="relative h-px flex-1 overflow-hidden">
         <div className="absolute inset-0 border-t border-dashed border-background/40" />
@@ -99,17 +99,17 @@ function TripCard({ trip, index, span }: { trip: Trip; index: number; span: "tal
           <div className="relative flex h-full flex-col justify-between">
             <div className="flex items-start justify-between">
               <div>
-                <Eyebrow className="text-background/70">{trip.date}</Eyebrow>
-                <h3 className="mt-1 text-3xl font-semibold tracking-tight text-background">{trip.city}</h3>
-                <p className="text-xs tracking-[0.2em] text-background/60">{trip.code} · {trip.country}</p>
+                <Eyebrow className="text-white/70">{trip.date}</Eyebrow>
+                <h3 className="mt-1 text-3xl font-semibold tracking-tight text-white/90">{trip.city}</h3>
+                <p className="text-xs tracking-[0.2em] text-white/60">{trip.code} · {trip.country}</p>
               </div>
-              <Pill tone={statusTone(trip.status)} className="bg-background/15 text-background backdrop-blur">
+              <Pill tone={statusTone(trip.status)} className="bg-white/15 text-white/90 backdrop-blur">
                 {trip.status}
               </Pill>
             </div>
             <div className="space-y-3">
               <RouteStrip from={trip.from} to={trip.to} />
-              <div className="flex items-center justify-between text-background/85">
+              <div className="flex items-center justify-between text-white/85">
                 <span className="rounded-full bg-background/15 px-2.5 py-1 text-[11px] backdrop-blur">
                   {trip.weather} · {trip.tempC}°C
                 </span>
@@ -262,10 +262,10 @@ function TripsPage() {
                 </div>
               )}
               <div className="relative flex h-full flex-col justify-between">
-                <p className="text-xs tracking-[0.2em] text-background/70">{t.code}</p>
+                <p className="text-xs tracking-[0.2em] text-white/70">{t.code}</p>
                 <div>
-                  <p className="text-xl font-semibold text-background">{t.city}</p>
-                  <p className="font-mono text-xs text-background/80">{countdownLabel(t.countdownHours)} to departure</p>
+                  <p className="text-xl font-semibold text-white/90">{t.city}</p>
+                  <p className="font-mono text-xs text-white/80">{countdownLabel(t.countdownHours)} to departure</p>
                 </div>
               </div>
             </motion.div>

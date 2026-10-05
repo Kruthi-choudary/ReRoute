@@ -3,21 +3,19 @@ import { motion } from "framer-motion";
 import {
   Plane,
   Bot,
-  CloudDrizzle,
   MapPin,
   QrCode,
   Search,
   ShieldCheck,
   Hotel,
   CalendarClock,
-  Zap,
   ChevronRight,
   Bell,
 } from "lucide-react";
 import { Panel, Eyebrow, CountUp, Ring, Pill, Reveal, LiveDot } from "@/components/app/primitives";
 import { WorldMap } from "@/components/app/WorldMap";
-import { RECOVERY_STEPS, type Trip } from "@/lib/travel-data";
-import { useTrips, useNotifications } from "@/lib/queries";
+import { type Trip } from "@/lib/travel-data";
+import { useTrips, useNotifications, useRecovery, type ApiRecoveryPlan } from "@/lib/queries";
 import { useRecoverySocket } from "@/lib/useRecoverySocket";
 
 export const Route = createFileRoute("/_shell/dashboard")({
@@ -32,6 +30,82 @@ export const Route = createFileRoute("/_shell/dashboard")({
   }),
 });
 
+function RecoveryTimeline({ plan }: { plan: ApiRecoveryPlan }) {
+  const actions = plan.actions;
+  const total = actions.length;
+  const done = actions.filter((a) => a.status === "COMPLETED").length;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  const newFlight = plan.selected_flight?.[0];
+  const flightLabel = newFlight
+    ? `${newFlight.origin ?? newFlight.dep_iata ?? "—"} → ${newFlight.destination ?? newFlight.arr_iata ?? "—"} · ${newFlight.flight_number ?? newFlight.flight_iata ?? "—"}`
+    : "Recovery in progress";
+
+  return (
+    <Panel>
+      <div className="flex items-center justify-between">
+        <Eyebrow>Travel recovery timeline</Eyebrow>
+        <Pill tone={plan.status === "COMPLETED" ? "success" : "warning"}>
+          <Bot className="h-3 w-3" /> {flightLabel}
+        </Pill>
+      </div>
+      <div className="relative mt-8 flex items-center justify-between px-2">
+        <div className="absolute left-2 right-2 top-4 h-[2px] bg-border/70" />
+        <motion.div
+          className="absolute left-2 top-4 h-[2px] bg-primary"
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+        />
+        {actions.map((a, i) => {
+          const state = a.status === "COMPLETED" ? "done" : a.status === "IN_PROGRESS" ? "running" : "pending";
+          const label = a.action_type.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          const time = a.executed_at ? new Date(a.executed_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+          return (
+            <div key={a.id} className="relative z-10 flex flex-col items-center" style={{ width: `${100 / actions.length}%` }}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.1, type: "spring", stiffness: 260, damping: 18 }}
+                className={
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 text-[10px] font-bold " +
+                  (state === "done"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : state === "running"
+                    ? "border-[var(--warning)] bg-card text-[var(--warning)]"
+                    : "border-border bg-card text-muted-foreground")
+                }
+              >
+                {state === "running" ? (
+                  <motion.span className="h-2 w-2 rounded-full bg-[var(--warning)]" animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1.4, repeat: Infinity }} />
+                ) : i + 1}
+              </motion.div>
+              <p className="mt-3 max-w-[110px] text-center text-[11px] font-medium text-foreground">{label}</p>
+              <p className="mt-1 text-center text-[10px] text-muted-foreground">{time}</p>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function NoDisruptionTimeline() {
+  return (
+    <Panel>
+      <div className="flex items-center justify-between">
+        <Eyebrow>Travel recovery timeline</Eyebrow>
+        <Pill tone="success"><LiveDot tone="success" /> All clear</Pill>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+        <ShieldCheck className="h-8 w-8 text-[var(--success)]/60" />
+        <p className="text-sm font-medium text-foreground">No disruptions detected</p>
+        <p className="text-xs text-muted-foreground">When a recovery runs, the full action timeline will appear here.</p>
+      </div>
+    </Panel>
+  );
+}
+
 const QUICK_ACTIONS = [
   { icon: Search, label: "Find flight", to: "/trips" as const },
   { icon: Hotel, label: "Hold hotel", to: "/hotels" as const },
@@ -42,6 +116,7 @@ const QUICK_ACTIONS = [
 function Dashboard() {
   const trips = useTrips();
   const notifications = useNotifications();
+  const recovery = useRecovery();
   const trip = trips[0]!;
   const realTrip = trips.find((t) => /^\d+$/.test(t.id));
   useRecoverySocket(realTrip?.id ?? null);
@@ -111,52 +186,7 @@ function Dashboard() {
 
         {/* Recovery timeline — wide */}
         <Reveal delay={0.12} className="col-span-12">
-          <Panel>
-            <div className="flex items-center justify-between">
-              <Eyebrow>Travel recovery timeline</Eyebrow>
-              <Pill tone="primary"><Bot className="h-3 w-3" /> LX 15 → UA 934</Pill>
-            </div>
-            <div className="relative mt-8 flex items-center justify-between px-2">
-              <div className="absolute left-2 right-2 top-4 h-[2px] bg-border/70" />
-              <motion.div
-                className="absolute left-2 top-4 h-[2px] bg-primary"
-                initial={{ width: 0 }}
-                whileInView={{ width: "58%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-              />
-              {RECOVERY_STEPS.map((s, i) => (
-                <div key={s.id} className="relative z-10 flex flex-col items-center" style={{ width: `${100 / RECOVERY_STEPS.length}%` }}>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.08, type: "spring", stiffness: 260, damping: 18 }}
-                    className={
-                      "flex h-8 w-8 items-center justify-center rounded-full border-2 text-[10px] font-bold " +
-                      (s.state === "done"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : s.state === "running"
-                        ? "border-[var(--warning)] bg-card text-[var(--warning)]"
-                        : "border-border bg-card text-muted-foreground")
-                    }
-                  >
-                    {s.state === "running" ? (
-                      <motion.span
-                        className="h-2 w-2 rounded-full bg-[var(--warning)]"
-                        animate={{ scale: [1, 1.5, 1] }}
-                        transition={{ duration: 1.4, repeat: Infinity }}
-                      />
-                    ) : (
-                      i + 1
-                    )}
-                  </motion.div>
-                  <p className="mt-3 max-w-[110px] text-center text-[11px] font-medium text-foreground">{s.label}</p>
-                  <p className="mt-1 text-center text-[10px] text-muted-foreground">{s.duration}</p>
-                </div>
-              ))}
-            </div>
-          </Panel>
+          {recovery?.plan ? <RecoveryTimeline plan={recovery.plan} /> : <NoDisruptionTimeline />}
         </Reveal>
 
         {/* Quick actions */}

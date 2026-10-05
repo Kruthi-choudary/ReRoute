@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AuthLayout, AuthHeading, Field, PrimaryButton } from "@/components/auth/AuthShell";
 import { useAuth, takeRedirect } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
+import { useForceLightMode } from "@/lib/useTheme";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  useForceLightMode();
   const navigate = useNavigate();
   const { session, setSession } = useAuth();
   const [email, setEmail] = useState("");

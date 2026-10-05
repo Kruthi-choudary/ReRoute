@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AuthLayout, AuthHeading, Field, PrimaryButton } from "@/components/auth/AuthShell";
 import { useAuth, takeRedirect } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
+import { useForceLightMode } from "@/lib/useTheme";
 
 const COUNTRIES = [
   "United States", "United Kingdom", "United Arab Emirates", "Canada", "India",
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignUpPage() {
+  useForceLightMode();
   const navigate = useNavigate();
   const { session, setSession } = useAuth();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "", country: "" });
