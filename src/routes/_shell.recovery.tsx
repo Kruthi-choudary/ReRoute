@@ -424,7 +424,21 @@ function RecoveryCenter() {
         eyebrow="Recovery Center"
         title="One cancellation. Zero manual work."
         lede="Follow the autonomous workflow node by node, then inspect exactly how the decision engine chose your replacement itinerary."
-        actions={statusPill(planStatus)}
+        actions={
+          <div className="flex items-center gap-3">
+            {statusPill(planStatus)}
+            {(planStatus === "COMPLETED" || planStatus === "FAILED") && (
+              <button
+                onClick={handleResetDemo}
+                disabled={!!demoActing}
+                className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+              >
+                {demoActing === "reset" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                Reset demo
+              </button>
+            )}
+          </div>
+        }
       />
 
       {planStatus === "AWAITING_APPROVAL" && (
