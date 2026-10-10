@@ -130,7 +130,7 @@ function SettingsPage() {
     if (!user) return;
     setSaving(true);
     try {
-      await apiFetch(`/api/policies/${user.id}/preferences`, {
+      await apiFetch(`/api/policies/preferences`, {
         method: "PUT",
         body: JSON.stringify({ preferred_cabin: CABIN_TO_API[cabin], seat_preference: SEAT_TO_API[seat] }),
       });
@@ -145,7 +145,7 @@ function SettingsPage() {
   async function saveThreshold() {
     if (!user) return;
     try {
-      await apiFetch(`/api/policies/${user.id}`, {
+      await apiFetch(`/api/policies`, {
         method: "PUT",
         body: JSON.stringify({ auto_spend_limit: threshold[0] }),
       });

@@ -209,14 +209,16 @@ export function useTrips(): Trip[] {
     queryKey: ["trips", user?.id],
     queryFn: async () => {
       const res = await apiFetch(`/api/trips/`);
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`Failed to load trips (${res.status})`);
       return res.json() as Promise<ApiTrip[]>;
     },
     enabled: !!user,
     staleTime: 30_000,
   });
-  const mapped = (data ?? []).map(mapApiTrip);
-  return mapped.length > 0 ? mapped : (TRIPS as unknown as Trip[]);
+  // Mock data only covers the loading/error gap — a real empty list (data === [])
+  // from a signed-in user is shown as-is, not masked with fake trips.
+  if (data === undefined) return TRIPS as unknown as Trip[];
+  return data.map(mapApiTrip);
 }
 
 export function useRecovery(): { plan: ApiRecoveryPlan; tripId: string } | null {
@@ -256,7 +258,7 @@ export function usePolicy(): PolicyData | null {
   const { data: policy } = useQuery({
     queryKey: ["policy", user?.id],
     queryFn: async () => {
-      const res = await apiFetch(`/api/policies/${user!.id}`);
+      const res = await apiFetch(`/api/policies`);
       if (!res.ok) return null;
       return res.json() as Promise<{ auto_spend_limit: number; approval_spend_limit: number; allowed_cabins: string[] }>;
     },
@@ -267,7 +269,7 @@ export function usePolicy(): PolicyData | null {
   const { data: prefs } = useQuery({
     queryKey: ["preferences", user?.id],
     queryFn: async () => {
-      const res = await apiFetch(`/api/policies/${user!.id}/preferences`);
+      const res = await apiFetch(`/api/policies/preferences`);
       if (!res.ok) return null;
       return res.json() as Promise<{ preferred_cabin: string; seat_preference: string | null }>;
     },
@@ -323,21 +325,24 @@ export function useNotifications(): NotificationItem[] {
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
       const res = await apiFetch(`/api/notifications/`);
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`Failed to load notifications (${res.status})`);
       return res.json() as Promise<ApiNotification[]>;
     },
     enabled: !!user,
     staleTime: 30_000,
   });
-  const mapped = (data ?? []).map(mapApiNotif);
-  if (mapped.length > 0) return mapped;
-  return NOTIFICATIONS.map((n) => ({
-    id: n.id,
-    group: n.group as NotificationItem["group"],
-    time: n.time,
-    title: n.title,
-    body: n.body,
-    kind: n.kind as NotificationItem["kind"],
-    unread: n.unread,
-  }));
+  // Mock data only covers the loading/error gap — a real empty list from a
+  // signed-in user is shown as-is, not masked with fake notifications.
+  if (data === undefined) {
+    return NOTIFICATIONS.map((n) => ({
+      id: n.id,
+      group: n.group as NotificationItem["group"],
+      time: n.time,
+      title: n.title,
+      body: n.body,
+      kind: n.kind as NotificationItem["kind"],
+      unread: n.unread,
+    }));
+  }
+  return data.map(mapApiNotif);
 }
