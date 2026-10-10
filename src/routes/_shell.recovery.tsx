@@ -96,6 +96,41 @@ function mapPlanToSteps(plan: ApiRecoveryPlan): RecoveryStep[] {
   }));
 }
 
+const PRE_EXECUTION_STAGES = [
+  { id: "p1", label: "Disruption detected", detail: "Carrier feed · airport status · NOTAM" },
+  { id: "p2", label: "Impact analysis", detail: "Connections, hotel & transfer windows" },
+  { id: "p3", label: "Search alternatives", detail: "27+ carriers scored in real time" },
+  { id: "p4", label: "Policy check", detail: "Auto-approve vs. approval threshold" },
+  { id: "p5", label: "Execute & notify", detail: "Rebook, modify hotel, send boarding pass" },
+];
+
+// Before the first RecoveryAction exists (ANALYZING / PLAN_READY / POLICY_CHECK / AWAITING_APPROVAL /
+// early EXECUTING), there's nothing for mapPlanToSteps to show yet. Render the pipeline stages
+// themselves instead, so the workflow panel never looks blank/stuck mid-run.
+function buildPreExecutionSteps(status: string): RecoveryStep[] {
+  const doneThrough =
+    status === "ANALYZING" ? -1
+    : status === "PLAN_READY" ? 0
+    : status === "POLICY_CHECK" ? 1
+    : status === "AWAITING_APPROVAL" ? 2
+    : status === "EXECUTING" ? 3
+    : 4; // terminal (COMPLETED / PARTIALLY_COMPLETED / FAILED) with no actions yet — treat as resolved
+  const runningIdx =
+    status === "ANALYZING" ? 0
+    : status === "PLAN_READY" ? 1
+    : status === "POLICY_CHECK" ? 2
+    : status === "EXECUTING" ? 3
+    : null; // AWAITING_APPROVAL and terminal states have nothing actively running
+
+  return PRE_EXECUTION_STAGES.map((s, i) => ({
+    id: s.id,
+    label: s.label,
+    detail: s.detail,
+    duration: i === runningIdx ? "···" : "—",
+    state: i <= doneThrough ? "done" : i === runningIdx ? "running" : "pending",
+  }));
+}
+
 function mapPlanToCandidates(plan: ApiRecoveryPlan): Candidate[] {
   const flights = plan.selected_flight;
   if (!flights || flights.length === 0) return [];
@@ -155,7 +190,11 @@ function RecoveryCenter() {
   const realTripId = recovery?.tripId ?? trips.find((t) => /^\d+$/.test(t.id))?.id;
   useRecoverySocket(realTripId);
 
-  const steps: RecoveryStep[] = recovery ? mapPlanToSteps(recovery.plan) : RECOVERY_STEPS;
+  const steps: RecoveryStep[] = recovery
+    ? recovery.plan.actions.length > 0
+      ? mapPlanToSteps(recovery.plan)
+      : buildPreExecutionSteps(recovery.plan.status)
+    : RECOVERY_STEPS;
   const candidates: Candidate[] = recovery
     ? mapPlanToCandidates(recovery.plan).concat(
         mapPlanToCandidates(recovery.plan).length === 0
