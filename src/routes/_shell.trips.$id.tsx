@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Panel, Eyebrow, Pill, Reveal } from "@/components/app/primitives";
 import { useTrips } from "@/lib/queries";
+import { type Trip } from "@/lib/travel-data";
 import { cn } from "@/lib/utils";
 
 const ITINERARY = [
@@ -62,7 +63,26 @@ export const Route = createFileRoute("/_shell/trips/$id")({
 function TripDetailPage() {
   const trips = useTrips();
   const { id } = Route.useParams();
-  const trip = trips.find((t) => t.id === id) ?? trips[0]!;
+  const trip = trips.find((t) => t.id === id) ?? trips[0];
+
+  if (!trip) {
+    return (
+      <div className="space-y-6">
+        <Link to="/trips" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
+          ← Back to trips
+        </Link>
+        <Panel className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+          <p className="text-sm font-semibold text-foreground">No trips yet</p>
+          <p className="text-xs text-muted-foreground">Add a trip to see its full itinerary here.</p>
+        </Panel>
+      </div>
+    );
+  }
+
+  return <TripDetailView trip={trip} />;
+}
+
+function TripDetailView({ trip }: { trip: Trip }) {
   const [rate, setRate] = useState(50);
   const [openLeg, setOpenLeg] = useState<number | null>(1);
 

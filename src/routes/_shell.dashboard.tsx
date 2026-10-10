@@ -117,7 +117,7 @@ function Dashboard() {
   const trips = useTrips();
   const notifications = useNotifications();
   const recovery = useRecovery();
-  const trip = trips[0]!;
+  const trip = trips[0];
   const realTrip = trips.find((t) => /^\d+$/.test(t.id));
   useRecoverySocket(realTrip?.id ?? null);
 
@@ -173,7 +173,7 @@ function Dashboard() {
               <div className="rounded-2xl bg-muted/50 p-3">
                 <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Trips tracked</p>
                 <p className="mt-1 text-xl font-semibold text-foreground">
-                  <CountUp to={trips.length || 1} />
+                  <CountUp to={trips.length} />
                 </p>
               </div>
               <div className="rounded-2xl bg-muted/50 p-3">
@@ -227,7 +227,7 @@ function Dashboard() {
 
         {/* Boarding pass */}
         <Reveal delay={0.18} className="col-span-12 md:col-span-4">
-          <BoardingPass trip={trip} />
+          {trip ? <BoardingPass trip={trip} /> : <NoTripsPanel />}
         </Reveal>
 
         {/* Upcoming flights */}
@@ -238,6 +238,11 @@ function Dashboard() {
               <Pill tone="muted"><Plane className="h-3 w-3" /> {trips.length} planned</Pill>
             </div>
             <div className="mt-5 space-y-3">
+              {trips.length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No trips yet — add one to start autonomous protection.
+                </p>
+              )}
               {trips.slice(0, 3).map((t) => (
                 <motion.div
                   key={t.id}
@@ -314,6 +319,18 @@ function RainCloud() {
         />
       ))}
     </svg>
+  );
+}
+
+function NoTripsPanel() {
+  return (
+    <Panel className="flex h-full flex-col items-center justify-center gap-3 text-center">
+      <Plane className="h-6 w-6 text-muted-foreground" />
+      <div>
+        <p className="text-sm font-semibold text-foreground">No trips yet</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">Add a trip to see your boarding pass here.</p>
+      </div>
+    </Panel>
   );
 }
 

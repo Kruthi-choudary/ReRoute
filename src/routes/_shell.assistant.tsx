@@ -95,7 +95,7 @@ function AssistantPage() {
   };
 
   const trips = useTrips();
-  const trip = trips[0]!
+  const trip = trips[0];
 
   return (
     <div className="space-y-8">
@@ -234,30 +234,32 @@ function AssistantPage() {
             </Panel>
           </Reveal>
 
-          <Reveal delay={0.05}>
-            <Panel>
-              <Eyebrow className="mb-3">Flight summary</Eyebrow>
-              <div className={cn("rounded-2xl bg-gradient-to-br p-4 text-background", trip.hue)}>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-[0.14em] opacity-80">{trip.flight}</span>
-                  <Plane className="h-4 w-4 opacity-80" />
+          {trip && (
+            <Reveal delay={0.05}>
+              <Panel>
+                <Eyebrow className="mb-3">Flight summary</Eyebrow>
+                <div className={cn("rounded-2xl bg-gradient-to-br p-4 text-background", trip.hue)}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-[0.14em] opacity-80">{trip.flight}</span>
+                    <Plane className="h-4 w-4 opacity-80" />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm font-semibold">
+                    <span>{trip.from}</span>
+                    <ArrowRight className="h-3.5 w-3.5 opacity-70" />
+                    <span>{trip.to}</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs opacity-80">
+                    <span>{trip.depart} → {trip.arrive}</span>
+                    <span>{trip.seat}</span>
+                  </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-sm font-semibold">
-                  <span>{trip.from}</span>
-                  <ArrowRight className="h-3.5 w-3.5 opacity-70" />
-                  <span>{trip.to}</span>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Pill tone="warning">{trip.status}</Pill>
+                  <Pill tone="muted">{trip.carrier}</Pill>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs opacity-80">
-                  <span>{trip.depart} → {trip.arrive}</span>
-                  <span>{trip.seat}</span>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Pill tone="warning">{trip.status}</Pill>
-                <Pill tone="muted">{trip.carrier}</Pill>
-              </div>
-            </Panel>
-          </Reveal>
+              </Panel>
+            </Reveal>
+          )}
 
           <Reveal delay={0.1}>
             <Panel>
