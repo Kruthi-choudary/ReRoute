@@ -239,6 +239,14 @@ function TripsPage() {
         }
       />
 
+      {trips.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 py-16 text-center">
+          <p className="text-sm font-semibold text-foreground">No trips yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">Add your first trip to start autonomous protection.</p>
+        </div>
+      )}
+
+      {trips.length > 0 && (
       <section>
         <Eyebrow className="mb-3">Next departures</Eyebrow>
         <motion.div
@@ -272,7 +280,9 @@ function TripsPage() {
           ))}
         </motion.div>
       </section>
+      )}
 
+      {trips.length > 0 && (
       <section className="columns-1 gap-6 md:columns-2">
         {trips.map((trip, i) => (
           <Reveal key={trip.id} delay={i * 0.06}>
@@ -280,6 +290,7 @@ function TripsPage() {
           </Reveal>
         ))}
       </section>
+      )}
     </div>
   );
 }
