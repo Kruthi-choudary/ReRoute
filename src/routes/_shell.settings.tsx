@@ -145,7 +145,7 @@ function SettingsPage() {
   async function saveThreshold() {
     if (!user) return;
     try {
-      await apiFetch(`/api/policies`, {
+      await apiFetch(`/api/policies/`, {
         method: "PUT",
         body: JSON.stringify({ auto_spend_limit: threshold[0] }),
       });
