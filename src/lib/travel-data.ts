@@ -132,8 +132,6 @@ export const NAV_ITEMS = [
   { to: "/recovery", label: "Recovery Center", icon: "Workflow" },
   { to: "/hotels", label: "Hotels", icon: "BedDouble" },
   { to: "/notifications", label: "Notifications", icon: "Bell" },
-  { to: "/analytics", label: "Analytics", icon: "BarChart3" },
-  { to: "/assistant", label: "AI Assistant", icon: "Bot" },
   { to: "/history", label: "Travel History", icon: "History" },
   { to: "/profile", label: "Profile", icon: "IdCard" },
   { to: "/settings", label: "Settings", icon: "Settings" },

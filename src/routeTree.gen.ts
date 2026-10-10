@@ -14,8 +14,6 @@ import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
-import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellDashboardRouteImport } from './routes/_shell.dashboard'
 import { Route as ShellHistoryRouteImport } from './routes/_shell.history'
 import { Route as ShellHotelsRouteImport } from './routes/_shell.hotels'
@@ -49,16 +47,6 @@ const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellAssistantRoute = ShellAssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
-  getParentRoute: () => ShellRoute,
 } as any)
 const ShellDashboardRoute = ShellDashboardRouteImport.update({
   id: '/dashboard',
@@ -111,8 +99,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
-  '/analytics': typeof ShellAnalyticsRoute
-  '/assistant': typeof ShellAssistantRoute
   '/dashboard': typeof ShellDashboardRoute
   '/history': typeof ShellHistoryRoute
   '/hotels': typeof ShellHotelsRoute
@@ -128,8 +114,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
-  '/analytics': typeof ShellAnalyticsRoute
-  '/assistant': typeof ShellAssistantRoute
   '/dashboard': typeof ShellDashboardRoute
   '/history': typeof ShellHistoryRoute
   '/hotels': typeof ShellHotelsRoute
@@ -147,8 +131,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
-  '/_shell/analytics': typeof ShellAnalyticsRoute
-  '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/dashboard': typeof ShellDashboardRoute
   '/_shell/history': typeof ShellHistoryRoute
   '/_shell/hotels': typeof ShellHotelsRoute
@@ -166,8 +148,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/signin'
     | '/signup'
-    | '/analytics'
-    | '/assistant'
     | '/dashboard'
     | '/history'
     | '/hotels'
@@ -183,8 +163,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/signin'
     | '/signup'
-    | '/analytics'
-    | '/assistant'
     | '/dashboard'
     | '/history'
     | '/hotels'
@@ -201,8 +179,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/signin'
     | '/signup'
-    | '/_shell/analytics'
-    | '/_shell/assistant'
     | '/_shell/dashboard'
     | '/_shell/history'
     | '/_shell/hotels'
@@ -258,20 +234,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_shell/analytics': {
-      id: '/_shell/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof ShellAnalyticsRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/assistant': {
-      id: '/_shell/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof ShellAssistantRouteImport
-      parentRoute: typeof ShellRoute
     }
     '/_shell/dashboard': {
       id: '/_shell/dashboard'
@@ -340,8 +302,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface ShellRouteChildren {
-  ShellAnalyticsRoute: typeof ShellAnalyticsRoute
-  ShellAssistantRoute: typeof ShellAssistantRoute
   ShellDashboardRoute: typeof ShellDashboardRoute
   ShellHistoryRoute: typeof ShellHistoryRoute
   ShellHotelsRoute: typeof ShellHotelsRoute
@@ -354,8 +314,6 @@ interface ShellRouteChildren {
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
-  ShellAnalyticsRoute: ShellAnalyticsRoute,
-  ShellAssistantRoute: ShellAssistantRoute,
   ShellDashboardRoute: ShellDashboardRoute,
   ShellHistoryRoute: ShellHistoryRoute,
   ShellHotelsRoute: ShellHotelsRoute,
