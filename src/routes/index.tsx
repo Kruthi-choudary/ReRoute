@@ -889,12 +889,12 @@ function CTA() {
           Start free, or talk to us about enterprise deployments across your entire mobility programme.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <a href="#" className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5">
+          <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:-translate-y-0.5">
             Start Free <ArrowRight className="h-4 w-4" />
-          </a>
-          <a href="#" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-7 py-4 text-sm font-semibold text-foreground transition hover:bg-background">
-            Book Demo
-          </a>
+          </Link>
+          <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-7 py-4 text-sm font-semibold text-foreground transition hover:bg-background">
+            Login
+          </Link>
         </div>
         <div className="mt-6 text-xs text-secondary">No credit card · Cancel anytime · SOC 2 Type II</div>
       </div>
