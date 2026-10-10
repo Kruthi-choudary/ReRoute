@@ -174,6 +174,7 @@ function RecoveryCenter() {
 
   const [selected, setSelected] = useState<RecoveryStep>(steps[0] ?? RECOVERY_STEPS[3]);
   const [acting, setActing] = useState<"approve" | "reject" | null>(null);
+  const [demoActing, setDemoActing] = useState<"disrupt" | "reset" | null>(null);
 
   // Sync selected step when real steps load or change
   useEffect(() => {
@@ -211,6 +212,36 @@ function RecoveryCenter() {
       toast.error("Failed to reject.");
     } finally {
       setActing(null);
+    }
+  }
+
+  async function handleSimulateDisruption() {
+    setDemoActing("disrupt");
+    try {
+      const res = await apiFetch(`/api/demo/self/disrupt?delay_minutes=165`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      toast.success("Disruption injected — watch the pipeline run.");
+      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+    } catch {
+      toast.error("Failed to simulate disruption.");
+    } finally {
+      setDemoActing(null);
+    }
+  }
+
+  async function handleResetDemo() {
+    setDemoActing("reset");
+    try {
+      const res = await apiFetch(`/api/demo/self/reset`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      toast.success("Demo trip reset.");
+      await queryClient.invalidateQueries({ queryKey: ["recovery"] });
+      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      await queryClient.invalidateQueries({ queryKey: ["hotel-reservations"] });
+    } catch {
+      toast.error("Failed to reset demo.");
+    } finally {
+      setDemoActing(null);
     }
   }
 
@@ -357,23 +388,23 @@ function RecoveryCenter() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   Inject a simulated 165-minute delay to watch the full recovery pipeline run live — policy check and approval flow included.
                 </p>
-                <div className="mt-5 space-y-3">
-                  <div className="rounded-2xl border border-border/40 bg-muted/60 p-4">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Step 1 · Reset (before each demo)
-                    </p>
-                    <code className="block break-all text-[11px] text-foreground/80">
-                      curl -X POST &quot;http://127.0.0.1:8000/api/demo/reset?user_id=3&quot;
-                    </code>
-                  </div>
-                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/70">
-                      Step 2 · Inject disruption
-                    </p>
-                    <code className="block break-all text-[11px] text-foreground/80">
-                      curl -X POST &quot;http://127.0.0.1:8000/api/demo/disruption?trip_id=4&amp;delay_minutes=165&quot;
-                    </code>
-                  </div>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    onClick={handleSimulateDisruption}
+                    disabled={!!demoActing}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50"
+                  >
+                    {demoActing === "disrupt" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    Simulate disruption
+                  </button>
+                  <button
+                    onClick={handleResetDemo}
+                    disabled={!!demoActing}
+                    className="flex items-center justify-center gap-2 rounded-full border border-border/60 bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                  >
+                    {demoActing === "reset" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Reset
+                  </button>
                 </div>
                 <div className="mt-4 flex items-start gap-3 rounded-2xl bg-muted/40 p-3 text-[11px] text-muted-foreground">
                   <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--warning)]" />
