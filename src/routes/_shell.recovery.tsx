@@ -99,7 +99,9 @@ function mapPlanToSteps(plan: ApiRecoveryPlan): RecoveryStep[] {
 function mapPlanToCandidates(plan: ApiRecoveryPlan): Candidate[] {
   const flights = plan.selected_flight;
   if (!flights || flights.length === 0) return [];
-  const maxScore = Math.max(...flights.map((f) => f.total_score ?? f.score ?? 0));
+  const scores = flights.map((f) => f.total_score ?? f.score ?? 0);
+  const maxScore = Math.max(...scores);
+  const chosenIndex = scores.indexOf(maxScore);
   return flights.map((f, i) => {
     const depDt = f.departure_datetime ? new Date(f.departure_datetime) : null;
     const arrDt = f.arrival_datetime ? new Date(f.arrival_datetime) : null;
@@ -113,7 +115,7 @@ function mapPlanToCandidates(plan: ApiRecoveryPlan): Candidate[] {
       price: Math.round(f.total_price_usd ?? f.price_est ?? 0),
       duration: mins ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "—",
       reliability: f.on_time_percentage ?? Math.round(score * 100),
-      chosen: score === maxScore && i === 0,
+      chosen: i === chosenIndex,
     };
   });
 }
