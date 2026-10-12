@@ -1,8 +1,10 @@
 # ReRoute AI — Frontend
 
-**Live:** https://re-route-sandy.vercel.app
+**Live app:** https://re-route-sandy.vercel.app · **Live API:** https://reroute-ai.onrender.com
 
-This is the dashboard for ReRoute AI — a system that watches a trip, detects when a flight is disrupted, and recovers the whole itinerary (flight, hotel, transfer) on its own, under a spend policy the traveller controls. The backend (`reroute_ai`) does the actual work; this is where you watch it happen and approve or reject what it decides.
+**Repos:** this is the frontend. Backend (full architecture + pipeline writeup) → [`reroute_ai`](https://github.com/Kruthi-choudary/reroute-ai)
+
+This is the dashboard for ReRoute AI — a system that watches a trip, detects when a flight is disrupted, and recovers the whole itinerary (flight, hotel, transfer) on its own, under a spend policy the traveller controls. The backend does the actual work; this is where you watch it happen and approve or reject what it decides.
 
 ## What's actually here
 
@@ -38,4 +40,4 @@ npm install
 npm run dev   # http://localhost:8080 (or 8081 if in use)
 ```
 
-Requires the backend running at the URL set in `.env` (copy from `.env.example`). Start the backend first — see [`reroute_ai`](https://github.com/Kruthi-choudary/reroute-ai)'s README for the full architecture writeup.
+Requires the backend running at the URL set in `.env` (copy from `.env.example`). Start the backend first.
