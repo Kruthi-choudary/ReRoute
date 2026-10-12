@@ -1,6 +1,8 @@
-# ReRoute AI — Frontend
+# ReRoute AI
 
-React 19 + TanStack Start (Vite) dashboard for the ReRoute AI travel disruption concierge. Talks to the FastAPI backend in the sibling [`reroute_ai`](https://github.com/Kruthi-choudary/reroute-ai) repo — see that repo's README for architecture and API details.
+Watch an AI rebook a disrupted flight, decide for itself whether that needs your approval, and notify your hotel — in real time, with nothing mocked.
+
+TanStack Start + React 19 dashboard, backed by the FastAPI service in [`reroute_ai`](https://github.com/Kruthi-choudary/reroute-ai) (architecture and API details there).
 
 **Live:** https://re-route-sandy.vercel.app
 
